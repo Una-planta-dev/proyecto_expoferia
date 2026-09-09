@@ -17,8 +17,10 @@
 
     <form action="procesar_registro_alumno.php" method="POST" class="form-columna">
         <div class="input-group">
-            <label for="nombre">Nombre completo</label>
+            <label for="nombre">Nombre</label>
             <input type="text" name="nombre" id="nombre">
+            <label for="apellido">apellido</label>
+            <input type="text" name="apellido" id="apellido">
         </div>
 
         <div class="input-group">
