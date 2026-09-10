@@ -90,10 +90,3 @@
         </script>
 </body>
 </html>
-
-/hola que tal ?
-/todo bien ?
-
-/yo estar bien gracias 2
-/re pero re bien 
-/ok está bien
