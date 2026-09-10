@@ -96,3 +96,4 @@
 
 /yo estar bien gracias 2
 /re pero re bien 
+/ok está bien
