@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1
--- Tiempo de generación: 13-08-2026 a las 03:53:33
+-- Tiempo de generación: 08-09-2026 a las 02:37:01
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -94,17 +94,6 @@ CREATE TABLE `codigo_qr` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `especialidad`
---
-
-CREATE TABLE `especialidad` (
-  `id_especialidad` int(11) NOT NULL,
-  `nombre` varchar(100) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
 -- Estructura de tabla para la tabla `estudiante`
 --
 
@@ -114,8 +103,15 @@ CREATE TABLE `estudiante` (
   `apellido` varchar(50) NOT NULL,
   `nie` varchar(8) NOT NULL,
   `correo_institucional` varchar(250) NOT NULL,
-  `contraseina` varchar(255) DEFAULT NULL
+  `contraseña` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Volcado de datos para la tabla `estudiante`
+--
+
+INSERT INTO `estudiante` (`id_estudiante`, `nombre`, `apellido`, `nie`, `correo_institucional`, `contraseña`) VALUES
+(1, 'Emerson Steven', 'Girón Garcís', '6370065', '6370065@clases.edu.sv', '$2y$10$TccPsTvDhiFptlXLeRyhKOPshju3fYwt5fakK5po5OX7ZT5oHNUAK');
 
 -- --------------------------------------------------------
 
@@ -171,6 +167,14 @@ CREATE TABLE `profesor` (
   `contraseña` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Volcado de datos para la tabla `profesor`
+--
+
+INSERT INTO `profesor` (`id_profesor`, `nombre`, `apellido`, `telefono`, `correo_institucional`, `contraseña`) VALUES
+(1, 'Roberto', 'Gomez', '7890-1234', 'roberto.gomez@clases.edu.sv', '$2y$10$OXaaZkhFk2wBOdc7FCmFTOwdkWAc3OFeWo1NQVMP7PAG0kKfDKUPO'),
+(2, 'Emerson Steven', 'Girón Garcís', '6116-6667', '6370065@clases.edu.sv', '$2y$10$H1iE/F0W.U3KcuAyyFsVs.LBIIKJ3BBiExxlOoKli.Sd8IcFkHcc6');
+
 -- --------------------------------------------------------
 
 --
@@ -181,7 +185,7 @@ CREATE TABLE `seccion` (
   `id_seccion` int(11) NOT NULL,
   `grado` varchar(20) NOT NULL,
   `seccion` varchar(20) NOT NULL,
-  `id_especialidad` int(11) NOT NULL
+  `especialidad` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -227,12 +231,6 @@ ALTER TABLE `codigo_qr`
   ADD KEY `id_clase` (`id_clase`);
 
 --
--- Indices de la tabla `especialidad`
---
-ALTER TABLE `especialidad`
-  ADD PRIMARY KEY (`id_especialidad`);
-
---
 -- Indices de la tabla `estudiante`
 --
 ALTER TABLE `estudiante`
@@ -270,8 +268,7 @@ ALTER TABLE `profesor`
 -- Indices de la tabla `seccion`
 --
 ALTER TABLE `seccion`
-  ADD PRIMARY KEY (`id_seccion`),
-  ADD KEY `id_especialidad` (`id_especialidad`);
+  ADD PRIMARY KEY (`id_seccion`);
 
 --
 -- AUTO_INCREMENT de las tablas volcadas
@@ -308,16 +305,10 @@ ALTER TABLE `codigo_qr`
   MODIFY `id_qr` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `especialidad`
---
-ALTER TABLE `especialidad`
-  MODIFY `id_especialidad` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de la tabla `estudiante`
 --
 ALTER TABLE `estudiante`
-  MODIFY `id_estudiante` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_estudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `horario`
@@ -341,7 +332,7 @@ ALTER TABLE `matricula`
 -- AUTO_INCREMENT de la tabla `profesor`
 --
 ALTER TABLE `profesor`
-  MODIFY `id_profesor` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_profesor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `seccion`
@@ -394,12 +385,6 @@ ALTER TABLE `matricula`
   ADD CONSTRAINT `matricula_ibfk_1` FOREIGN KEY (`id_estudiante`) REFERENCES `estudiante` (`id_estudiante`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `matricula_ibfk_2` FOREIGN KEY (`id_seccion`) REFERENCES `seccion` (`id_seccion`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `matricula_ibfk_3` FOREIGN KEY (`id_anio`) REFERENCES `anio_escolar` (`id_anio`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Filtros para la tabla `seccion`
---
-ALTER TABLE `seccion`
-  ADD CONSTRAINT `seccion_ibfk_1` FOREIGN KEY (`id_especialidad`) REFERENCES `especialidad` (`id_especialidad`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
