@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio de sesion</title>
-    <link rel="stylesheet" href="estilos.css?v=2.1">
+    <link rel="stylesheet" href="estilos.css?v=2.2">
 </head>
 <link rel="icon" type="image/png" href="logo-removebg-preview.png">
 <body>
@@ -90,5 +90,3 @@
         </script>
 </body>
 </html>
-
-/*esto es una preuba de git*/
