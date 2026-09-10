@@ -12,8 +12,13 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST') {
     }
 
     try {
+<<<<<<< HEAD
         // 1. Incluimos el campo 'rol' en la consulta SQL
         $query = "SELECT id, correo, password, rol FROM usuarios WHERE correo = :correo";
+=======
+        // 1. Agregamos 'rol' y 'nombre' a la consulta SQL
+        $query = "SELECT id, nombre, correo, password, rol FROM usuarios WHERE correo = :correo";
+>>>>>>> b4d6fbe7badd2433dbdbb3553ffc627837a984e2
         $stmt = $conexion->prepare($query);
         $stmt->bindParam(':correo', $correo, PDO::PARAM_STR);
         $stmt->execute();
@@ -21,6 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST') {
         if ($stmt->rowCount() == 1) {
             $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
+<<<<<<< HEAD
             if (password_verify($password, $usuario['password'])) {
                 // 2. Guardamos tanto usuario_id como id_profesor para compatibilidad
                 $_SESSION['usuario_id'] = $usuario['id'];
@@ -34,6 +40,24 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST') {
                     header("Location: panel_profesor.php");
                 }
                 exit();
+=======
+            // 2. Verificación de contraseña
+            if (password_verify($password, $usuario['password'])) {
+                
+                // Guardar datos clave en la sesión
+                $_SESSION['usuario_id'] = $usuario['id'];
+                $_SESSION['nombre'] = $usuario['nombre'];
+                $_SESSION['rol'] = $usuario['rol'];
+
+                // 3. Redirección condicional según el rol
+                if ($usuario['rol'] === 'admin' || $usuario['rol'] === 'docente') {
+                    header("Location: panel_admin.php");
+                } else {
+                    header("Location: estudiante.php");
+                }
+                exit();
+
+>>>>>>> b4d6fbe7badd2433dbdbb3553ffc627837a984e2
             } else {
                 header("Location: login.php?error=credenciales_incorrectas");
                 exit();
@@ -50,4 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST') {
     header("Location: login.php");
     exit();
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> b4d6fbe7badd2433dbdbb3553ffc627837a984e2
