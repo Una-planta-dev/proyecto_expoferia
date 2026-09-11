@@ -13,13 +13,15 @@ if (!isset($_SESSION['id_profesor'])) {
 
 $id_profesor = $_SESSION['id_profesor'];
 
-// Endpoint AJAX: Devuelve las asistencias del día en JSON
+// -------------------------------------------------------------------
+// ENDPOINT AJAX: Devuelve las asistencias del día en JSON para la tabla
+// -------------------------------------------------------------------
 if (isset($_GET['action']) && $_GET['action'] === 'cargar_asistencias') {
     header('Content-Type: application/json');
     try {
         $fecha_hoy = date('Y-m-d');
         
-        // Consulta SQL para obtener los registros del día actual
+        // Consulta SQL para obtener las asistencias registradas hoy
         $sql = "SELECT e.nombre, e.apellido, e.grado_seccion, a.hora_registro, a.estado 
                 FROM asistencia a 
                 INNER JOIN estudiante e ON a.id_estudiante = e.id_estudiante 
@@ -51,17 +53,20 @@ try {
 }
 
 // -------------------------------------------------------------------
-// CÁLCULO CÓDIGO DINÁMICO CADA 5 MINUTOS (300 SEGUNDOS)
+// CÁLCULO DE CÓDIGO DINÁMICO CADA 5 MINUTOS (300 SEGUNDOS)
+// Ejemplo de resultado: SYN-20260911-351C31
 // -------------------------------------------------------------------
 $tiempo_actual = time();
 $bloque_5min = floor($tiempo_actual / 300); 
 
-// Hash único para este bloque de 5 minutos
+// Hash único de 6 caracteres en mayúsculas para este bloque de 5 minutos
 $semilla = $id_profesor . '_' . $bloque_5min;
 $codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
 
-// Código manual dinámico y cadena QR
+// Código manual dinámico con el formato SYN-AAAAMMDD-HASH (Ej: SYN-20260911-351C31)
 $codigo_manual = "SYN-" . date('Ymd') . "-" . $codigo_hash;
+
+// Cadena codificada para el QR
 $datos_qr = "ASISTENCIA_" . $id_profesor . "_" . $bloque_5min . "_" . $codigo_hash;
 
 $hora_12h = date('h:i A'); 
@@ -112,7 +117,7 @@ $fecha_actual = date('d/m/Y');
             margin-bottom: 20px;
         }
 
-        /* CONTENEDOR SIN NEÓN NI BLUR */
+        /* Contenedor del QR sin brillo/neón */
         .qr-container {
             background: #ffffff;
             padding: 16px;
@@ -230,6 +235,7 @@ $fecha_actual = date('d/m/Y');
                     <h5 class="fw-bold text-light mb-1">Código QR de la Clase</h5>
                     <p class="text-subtle small mb-2">Muestra este código a tus estudiantes para registrar su asistencia.</p>
 
+                    <!-- Temporizador regresivo de 5 minutos -->
                     <div class="mb-3">
                         <span class="timer-badge">🔄 Cambia en: <span id="contador-cambio" class="fw-bold">05:00</span></span>
                     </div>
@@ -254,7 +260,7 @@ $fecha_actual = date('d/m/Y');
                 </div>
             </div>
 
-            <!-- Columna Derecha: Tabla Asistencia -->
+            <!-- Columna Derecha: Tabla de Asistencia -->
             <div class="col-lg-8">
                 <div class="card card-custom p-4">
                     <div class="d-flex justify-content-between align-items-center mb-4">
@@ -294,7 +300,7 @@ $fecha_actual = date('d/m/Y');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Reloj en tiempo real
+        // Reloj en tiempo real en la barra
         function actualizarReloj12H() {
             const ahora = new Date();
             let horas = ahora.getHours();
@@ -309,7 +315,7 @@ $fecha_actual = date('d/m/Y');
         }
         setInterval(actualizarReloj12H, 1000);
 
-        // Temporizador regresivo de 5 minutos
+        // Contador regresivo sincronizado para el cambio cada 5 minutos
         let tiempoRestante = 300 - (Math.floor(Date.now() / 1000) % 300);
 
         function actualizarContador() {
@@ -327,7 +333,7 @@ $fecha_actual = date('d/m/Y');
         setInterval(actualizarContador, 1000);
         actualizarContador();
 
-        // Carga y actualización automática de la tabla vía AJAX
+        // Cargar registros automáticamente por AJAX cada 3 segundos sin refrescar la página
         async function cargarTablaAsistencias() {
             try {
                 const response = await fetch('?action=cargar_asistencias');
@@ -355,7 +361,7 @@ $fecha_actual = date('d/m/Y');
                                     <td><span class="badge bg-dark border border-secondary text-light">${item.grado_seccion}</span></td>
                                     <td class="time-badge">${item.hora_registro}</td>
                                     <td class="text-end">
-                                        <span class="badge bg-success border border-success px-3 py-2">Presente</span>
+                                        <span class="badge bg-success border border-success px-3 py-2">${item.estado || 'Presente'}</span>
                                     </td>
                                 </tr>`;
                         });
@@ -363,11 +369,10 @@ $fecha_actual = date('d/m/Y');
                     }
                 }
             } catch (error) {
-                console.error("Error al actualizar la tabla de asistencias:", error);
+                console.error("Error al cargar asistencias:", error);
             }
         }
 
-        // Consultar nuevos datos cada 3 segundos sin recargar la página
         setInterval(cargarTablaAsistencias, 3000);
         cargarTablaAsistencias();
     </script>
