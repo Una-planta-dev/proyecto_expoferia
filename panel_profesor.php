@@ -13,6 +13,33 @@ if (!isset($_SESSION['id_profesor'])) {
 
 $id_profesor = $_SESSION['id_profesor'];
 
+// Endpoint AJAX: Devuelve las asistencias del día en JSON
+if (isset($_GET['action']) && $_GET['action'] === 'cargar_asistencias') {
+    header('Content-Type: application/json');
+    try {
+        $fecha_hoy = date('Y-m-d');
+        
+        // Consulta SQL para obtener los registros del día actual
+        $sql = "SELECT e.nombre, e.apellido, e.grado_seccion, a.hora_registro, a.estado 
+                FROM asistencia a 
+                INNER JOIN estudiante e ON a.id_estudiante = e.id_estudiante 
+                WHERE a.id_profesor = :id_profesor AND DATE(a.fecha_registro) = :fecha
+                ORDER BY a.hora_registro DESC";
+                
+        $stmt = $conexion->prepare($sql);
+        $stmt->execute([
+            ':id_profesor' => $id_profesor,
+            ':fecha' => $fecha_hoy
+        ]);
+        
+        $asistencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        echo json_encode(['success' => true, 'data' => $asistencias]);
+    } catch (PDOException $e) {
+        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+    }
+    exit();
+}
+
 // Obtener datos del profesor
 try {
     $stmt = $conexion->prepare("SELECT nombre, apellido FROM profesor WHERE id_profesor = :id");
@@ -23,7 +50,20 @@ try {
     $nombre_profesor = $_SESSION['nombre'] ?? 'Docente';
 }
 
-// Formato 12 Horas con minutos
+// -------------------------------------------------------------------
+// CÁLCULO CÓDIGO DINÁMICO CADA 5 MINUTOS (300 SEGUNDOS)
+// -------------------------------------------------------------------
+$tiempo_actual = time();
+$bloque_5min = floor($tiempo_actual / 300); 
+
+// Hash único para este bloque de 5 minutos
+$semilla = $id_profesor . '_' . $bloque_5min;
+$codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
+
+// Código manual dinámico y cadena QR
+$codigo_manual = "SYN-" . date('Ymd') . "-" . $codigo_hash;
+$datos_qr = "ASISTENCIA_" . $id_profesor . "_" . $bloque_5min . "_" . $codigo_hash;
+
 $hora_12h = date('h:i A'); 
 $fecha_actual = date('d/m/Y');
 ?>
@@ -72,12 +112,13 @@ $fecha_actual = date('d/m/Y');
             margin-bottom: 20px;
         }
 
+        /* CONTENEDOR SIN NEÓN NI BLUR */
         .qr-container {
             background: #ffffff;
             padding: 16px;
             border-radius: 16px;
             display: inline-block;
-            box-shadow: 0 0 20px rgba(168, 85, 247, 0.2);
+            border: 2px solid #8b5cf6;
         }
 
         .codigo-alternativo {
@@ -99,7 +140,6 @@ $fecha_actual = date('d/m/Y');
         .btn-purple:hover {
             background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
             color: #ffffff;
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
         }
 
         .btn-outline-custom {
@@ -113,7 +153,6 @@ $fecha_actual = date('d/m/Y');
             color: #ffffff;
         }
 
-        /* Estilo corregido para la tabla oscura */
         .table-dark-custom {
             color: #e2e8f0;
             --bs-table-bg: transparent;
@@ -146,6 +185,15 @@ $fecha_actual = date('d/m/Y');
 
         .text-subtle {
             color: #94a3b8 !important;
+        }
+
+        .timer-badge {
+            background-color: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid #8b5cf6;
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 20px;
         }
     </style>
 </head>
@@ -180,11 +228,15 @@ $fecha_actual = date('d/m/Y');
             <div class="col-lg-4">
                 <div class="card card-custom p-4 text-center">
                     <h5 class="fw-bold text-light mb-1">Código QR de la Clase</h5>
-                    <p class="text-subtle small mb-3">Muestra este código a tus estudiantes para registrar su asistencia.</p>
+                    <p class="text-subtle small mb-2">Muestra este código a tus estudiantes para registrar su asistencia.</p>
 
                     <div class="mb-3">
+                        <span class="timer-badge">🔄 Cambia en: <span id="contador-cambio" class="fw-bold">05:00</span></span>
+                    </div>
+
+                    <div class="mb-3 py-2">
                         <div class="qr-container">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=ASISTENCIA_DOCENTE_<?= $id_profesor ?>_<?= date('h-i-A') ?>" alt="Código QR Asistencia" class="img-fluid">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=<?= urlencode($datos_qr) ?>" alt="Código QR Asistencia" class="img-fluid" style="border-radius: 8px;">
                         </div>
                     </div>
 
@@ -195,10 +247,10 @@ $fecha_actual = date('d/m/Y');
 
                     <div class="codigo-alternativo mb-3">
                         <small class="text-subtle d-block mb-1">Código Alternativo Manual:</small>
-                        <h3 class="mb-0 fw-bold text-light" style="letter-spacing: 2px;">SYN-<?= date('Ymd') ?>-<?= str_replace([' ', ':'], '', $hora_12h) ?></h3>
+                        <h3 class="mb-0 fw-bold text-light" style="letter-spacing: 2px;"><?= $codigo_manual ?></h3>
                     </div>
 
-                    <button class="btn btn-purple w-100 py-2 mt-2" onclick="location.reload();">Generar / Actualizar Código</button>
+                    <button class="btn btn-purple w-100 py-2 mt-2" onclick="location.reload();">Generar / Actualizar Código Ahora</button>
                 </div>
             </div>
 
@@ -223,12 +275,11 @@ $fecha_actual = date('d/m/Y');
                                     <th class="text-end">Estado</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody id="tabla-asistencia-body">
                                 <tr>
                                     <td colspan="4" class="text-center py-5">
                                         <div class="py-3">
-                                            <p class="mb-1 text-light">Esperando que los alumnos escaneen el código QR...</p>
-                                            <small class="text-subtle">Los registros aparecerán automáticamente en esta lista.</small>
+                                            <p class="mb-1 text-light">Cargando registros...</p>
                                         </div>
                                     </td>
                                 </tr>
@@ -243,6 +294,7 @@ $fecha_actual = date('d/m/Y');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Reloj en tiempo real
         function actualizarReloj12H() {
             const ahora = new Date();
             let horas = ahora.getHours();
@@ -256,6 +308,68 @@ $fecha_actual = date('d/m/Y');
             document.getElementById('reloj-12h').textContent = `${horasStr}:${minutos} ${ampm}`;
         }
         setInterval(actualizarReloj12H, 1000);
+
+        // Temporizador regresivo de 5 minutos
+        let tiempoRestante = 300 - (Math.floor(Date.now() / 1000) % 300);
+
+        function actualizarContador() {
+            const min = String(Math.floor(tiempoRestante / 60)).padStart(2, '0');
+            const seg = String(tiempoRestante % 60).padStart(2, '0');
+            
+            document.getElementById('contador-cambio').textContent = `${min}:${seg}`;
+
+            if (tiempoRestante <= 0) {
+                location.reload();
+            } else {
+                tiempoRestante--;
+            }
+        }
+        setInterval(actualizarContador, 1000);
+        actualizarContador();
+
+        // Carga y actualización automática de la tabla vía AJAX
+        async function cargarTablaAsistencias() {
+            try {
+                const response = await fetch('?action=cargar_asistencias');
+                const result = await response.json();
+
+                if (result.success) {
+                    const tbody = document.getElementById('tabla-asistencia-body');
+                    
+                    if (result.data.length === 0) {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="py-3">
+                                        <p class="mb-1 text-light">Esperando que los alumnos escaneen el código QR...</p>
+                                        <small class="text-subtle">Los registros aparecerán automáticamente en esta lista.</small>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    } else {
+                        let html = '';
+                        result.data.forEach(item => {
+                            html += `
+                                <tr>
+                                    <td class="fw-semibold text-light">${item.nombre} ${item.apellido}</td>
+                                    <td><span class="badge bg-dark border border-secondary text-light">${item.grado_seccion}</span></td>
+                                    <td class="time-badge">${item.hora_registro}</td>
+                                    <td class="text-end">
+                                        <span class="badge bg-success border border-success px-3 py-2">Presente</span>
+                                    </td>
+                                </tr>`;
+                        });
+                        tbody.innerHTML = html;
+                    }
+                }
+            } catch (error) {
+                console.error("Error al actualizar la tabla de asistencias:", error);
+            }
+        }
+
+        // Consultar nuevos datos cada 3 segundos sin recargar la página
+        setInterval(cargarTablaAsistencias, 3000);
+        cargarTablaAsistencias();
     </script>
 </body>
 </html>
