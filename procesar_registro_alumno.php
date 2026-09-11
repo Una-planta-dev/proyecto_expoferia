@@ -12,47 +12,53 @@ try {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $nombre = trim($_POST['nombre']);
-    $apellido = trim($_POST['apellido']);
-    $nie = trim($_POST['nie']);
-    $correo = trim($_POST['correo']);
-    $clave = $_POST['password'];
+    $nombre = trim($_POST['nombre'] ?? '');
+    $apellido = trim($_POST['apellido'] ?? '');
+    $nie = trim($_POST['nie'] ?? '');
+    $correo = trim($_POST['correo'] ?? '');
+    $clave = $_POST['password'] ?? '';
 
     if (empty($nombre) || empty($apellido) || empty($nie) || empty($correo) || empty($clave)) {
-        die("Todos los campos son obligatorios.");
+        echo "<script>
+        alert('Por favor completa todos los campos, incluida la contraseña.');
+        window.history.back();
+        </script>";
+        exit;
     }
-    $check = $conexion->prepare("SELECT id_estudiante FROM estudiante WHERE correo_institucional = :correo or nie = :nie");
-$check ->execute([':correo' => $correo, ':nie' => $nie]);
 
-if ($check->rowCount() > 0) {
+    $check = $conexion->prepare("SELECT id_estudiante FROM estudiante WHERE correo_institucional = :correo OR nie = :nie");
+    $check->execute([':correo' => $correo, ':nie' => $nie]);
+
+    if ($check->rowCount() > 0) {
+        echo "<script>
+        alert('El correo o NIE ya están registrados.');
+        window.history.back();
+        </script>";
+        exit;
+    }
+
+    $clave_encriptada = password_hash($clave, PASSWORD_BCRYPT);
+
+    $sql = "INSERT INTO estudiante (nombre, apellido, nie, correo_institucional, contraseina)
+            VALUES (:nombre, :apellido, :nie, :correo, :clave)";
+
+    $stmt = $conexion->prepare($sql);
+    $stmt->execute([
+        ':nombre' => $nombre,
+        ':apellido' => $apellido,
+        ':nie' => $nie,
+        ':correo' => $correo,
+        ':clave' => $clave_encriptada
+    ]);
+
     echo "<script>
-    alert('El correo o nie ya estan registrados.');
-    window.history.back();
+    alert('¡Alumno registrado exitosamente!');
+    window.location.href = 'login.php';
     </script>";
     exit;
-}
-$clave_encriptada = password_hash($clave, PASSWORD_BCRYPT);
-
-$sql = "INSERT INTO estudiante (nombre, apellido, nie, correo_institucional, contraseña)
-VALUES (:nombre, :apellido, :nie, :correo, :clave)";
-
-$stmt = $conexion->prepare($sql);
-$stmt->execute([
-    ':nombre' => $nombre,
-    ':apellido' => $apellido,
-    ':nie' => $nie,
-    ':correo' => $correo,
-    ':clave' => $clave_encriptada
-]);
-
-echo "<script>
-alert('Alumno registrado exitosamente!');
-window.location.href = 'login.php';
-</script>";
-exit;
 
 } else {
-    header("Location:registro_alumno.php");
+    header("Location: registro_alumno.php");
     exit;
 }
 ?>
