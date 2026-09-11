@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inicio de Sesión - Synca</title>
+    <title>Inicio de sesion</title>
     <link rel="stylesheet" href="estilos.css?v=2.2">
     <link rel="icon" type="image/png" href="logo-removebg-preview.png">
 </head>
@@ -17,19 +17,19 @@
     </div>
 
     <div class="login-container">
-        <!-- Parte izquierda -->
+        <!-- parte izquierda -->
         <div class="login-banner">
             <div class="banner-content">
-                <h2>Sistema de Control de Asistencia</h2>
+                <h2>Sistema de control de asistencia</h2>
                 <p id="typewriter-text" class="explicacion"></p>
             </div>
         </div>
 
-        <!-- Parte derecha -->
+        <!-- parte derecha -->
         <div class="login-form">
             <img src="logo-removebg-preview.png" alt="logo Synca" class="logo">
-            <h2>Inicio de Sesión</h2>
-            <p class="subtitulo">Ingrese su información para acceder</p>
+            <h2>Inicio de sesion</h2>
+            <p class="subtitulo">Ingrese su informacion para acceder</p>
 
             <form action="procesar_login.php" method="post">
                 <div class="input-group">
@@ -38,8 +38,8 @@
                 </div>
                 
                 <div class="input-group">
-                    <label for="password">Contraseña</label>
-                    <input type="password" name="password" id="password" placeholder="••••••••" required>
+                    <label for="password">contraseña</label>
+                    <input type="password" name="password" id="password" placeholder="12345678" required>
                 </div>
 
                 <div class="form-actions">
@@ -49,9 +49,9 @@
                     <a href="#" class="forgot-pass">¿Olvidaste tu contraseña?</a>
                 </div>
 
-                <button type="submit">Iniciar sesión</button>
+                <button type="submit">Iniciar sesion</button>
                 <p class="registro-link">¿No tienes una cuenta?</p>
-                <a href="registro_opciones.php" class="btn-registro">Regístrate aquí</a>
+                <a href="registro_opciones.php" class="btn-registro">Registrate aqui</a>
             </form>
         </div>
     </div>
@@ -59,7 +59,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             // Efecto máquina de escribir
-            const text = "Proyecto creado por estudiantes de segundo año de software para la expoferia 2026, el proyecto es un registro de control de asistencia para los estudiantes de la institución utilizando códigos QR para modernizar la forma de toma de asistencia en el aula, creando un método más limpio, ordenado y fácil tanto para los alumnos como para los maestros.";
+            const text = "Proyecto creado por estudiantes de segundo año de software para la expoferia 2026, el proyecto es un registro de control de asistencia para los estudiantes de la institucion utilizando codigos QR para modernizar la forma de toma de asistencia en el aula, creando un metodo más limpio, ordenado y facil tanto para los alumnos como para los maestros";
             const textElement = document.getElementById("typewriter-text");
             let i = 0;
             const speed = 15;
@@ -94,5 +94,4 @@
         });
     </script>
 </body>
-</html>
 </html>
