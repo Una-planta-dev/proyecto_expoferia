@@ -21,17 +21,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // 1. Obtener todos los profesores registrados para verificar el código de 5 minutos
+        // 1. Obtener TODOS los profesores sin filtros para comparar el código dinámico correctamente
         $stmtProf = $conexion->query("SELECT id_profesor FROM profesor");
         $profesores = $stmtProf->fetchAll(PDO::FETCH_ASSOC);
 
         $id_profesor_encontrado = null;
         $tiempo_actual = time();
 
+        // Permitir el bloque actual y el bloque anterior
         $bloques_a_probar = [
             floor($tiempo_actual / 300),
             floor($tiempo_actual / 300) - 1
         ];
+
+        $codigo_ingresado_limpio = strtoupper(trim($codigo_ingresado));
 
         foreach ($profesores as $prof) {
             $id_prof = $prof['id_profesor'];
@@ -41,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
                 $codigo_manual_generado = "SYN-" . date('Ymd') . "-" . $codigo_hash;
 
-                if (strcasecmp($codigo_ingresado, $codigo_manual_generado) === 0) {
+                if ($codigo_ingresado_limpio === $codigo_manual_generado) {
                     $id_profesor_encontrado = $id_prof;
                     break 2;
                 }
@@ -53,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit();
         }
 
-        // 2. Buscar la clase asociada a este profesor
+        // 2. Buscar la clase asociada a este profesor encontrado
         $stmtClase = $conexion->prepare("
             SELECT c.id_clase FROM clase c 
             INNER JOIN asignacion a ON c.id_asignacion = a.id_asignacion 
@@ -77,32 +80,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $fecha_hoy = date('Y-m-d');
+        // 3. Registrar o actualizar la asistencia INCLUYENDO el id_profesor para que aparezca en el panel del docente
+        $sql = "INSERT INTO asistencia (id_estudiante, id_clase, id_profesor, fecha_registro, hora_registro, estado) 
+                VALUES (:id_estudiante, :id_clase, :id_profesor, CURDATE(), CURTIME(), 'Presente')
+                ON DUPLICATE KEY UPDATE 
+                id_profesor = :id_profesor,
+                fecha_registro = CURDATE(),
+                hora_registro = CURTIME(),
+                estado = 'Presente'";
+        
+        $stmt = $conexion->prepare($sql);
+        $stmt->execute([
+            ':id_estudiante' => $id_estudiante,
+            ':id_clase' => $id_clase,
+            ':id_profesor' => $id_profesor_encontrado
+        ]);
 
-        // 3. Intentar registrar la asistencia (Si ya existe debido al índice único, lo atrapamos limpiamente)
-        try {
-            $insert = $conexion->prepare("
-                INSERT INTO asistencia (id_estudiante, id_clase, fecha_registro, hora_registro, estado) 
-                VALUES (:id_estudiante, :id_clase, CURDATE(), CURTIME(), 'Presente')
-            ");
-            
-            $insert->execute([
-                ':id_estudiante' => $id_estudiante,
-                ':id_clase' => $id_clase
-            ]);
-
-            echo "<script>alert('¡Asistencia registrada exitosamente!'); window.location='panel_alumno.php';</script>";
-            exit();
-
-        } catch (PDOException $e) {
-            // Si el código de error es 1062 (Entrada duplicada por la llave única)
-            if ($e->getCode() == '23000' || strpos($e->getMessage(), '1062') !== false) {
-                echo "<script>alert('Ya has registrado tu asistencia anteriormente.'); window.location='panel_alumno.php';</script>";
-                exit();
-            } else {
-                throw $e; // Si es otro error de base de datos, lo relanzamos
-            }
-        }
+        echo "<script>alert('¡Asistencia registrada exitosamente!'); window.location='panel_alumno.php';</script>";
+        exit();
 
     } catch (Exception $e) {
         echo "<script>alert('Error en el sistema: " . addslashes($e->getMessage()) . "'); window.location='panel_alumno.php';</script>";

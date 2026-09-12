@@ -1,6 +1,8 @@
 <?php
 ob_start();
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 date_default_timezone_set('America/El_Salvador');
 
 require_once 'conexion.php';
@@ -12,35 +14,6 @@ if (!isset($_SESSION['id_profesor'])) {
 }
 
 $id_profesor = $_SESSION['id_profesor'];
-
-// -------------------------------------------------------------------
-// ENDPOINT AJAX: Devuelve las asistencias del día en JSON para la tabla
-// -------------------------------------------------------------------
-if (isset($_GET['action']) && $_GET['action'] === 'cargar_asistencias') {
-    header('Content-Type: application/json');
-    try {
-        $fecha_hoy = date('Y-m-d');
-        
-        // Consulta SQL para obtener las asistencias registradas hoy
-        $sql = "SELECT e.nombre, e.apellido, e.grado_seccion, a.hora_registro, a.estado 
-                FROM asistencia a 
-                INNER JOIN estudiante e ON a.id_estudiante = e.id_estudiante 
-                WHERE a.id_profesor = :id_profesor AND DATE(a.fecha_registro) = :fecha
-                ORDER BY a.hora_registro DESC";
-                
-        $stmt = $conexion->prepare($sql);
-        $stmt->execute([
-            ':id_profesor' => $id_profesor,
-            ':fecha' => $fecha_hoy
-        ]);
-        
-        $asistencias = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        echo json_encode(['success' => true, 'data' => $asistencias]);
-    } catch (PDOException $e) {
-        echo json_encode(['success' => false, 'error' => $e->getMessage()]);
-    }
-    exit();
-}
 
 // Obtener datos del profesor
 try {
@@ -54,19 +27,14 @@ try {
 
 // -------------------------------------------------------------------
 // CÁLCULO DE CÓDIGO DINÁMICO CADA 5 MINUTOS (300 SEGUNDOS)
-// Ejemplo de resultado: SYN-20260911-351C31
 // -------------------------------------------------------------------
 $tiempo_actual = time();
 $bloque_5min = floor($tiempo_actual / 300); 
 
-// Hash único de 6 caracteres en mayúsculas para este bloque de 5 minutos
 $semilla = $id_profesor . '_' . $bloque_5min;
 $codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
 
-// Código manual dinámico con el formato SYN-AAAAMMDD-HASH (Ej: SYN-20260911-351C31)
 $codigo_manual = "SYN-" . date('Ymd') . "-" . $codigo_hash;
-
-// Cadena codificada para el QR
 $datos_qr = "ASISTENCIA_" . $id_profesor . "_" . $bloque_5min . "_" . $codigo_hash;
 
 $hora_12h = date('h:i A'); 
@@ -117,7 +85,6 @@ $fecha_actual = date('d/m/Y');
             margin-bottom: 20px;
         }
 
-        /* Contenedor del QR sin brillo/neón */
         .qr-container {
             background: #ffffff;
             padding: 16px;
@@ -300,81 +267,98 @@ $fecha_actual = date('d/m/Y');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Reloj en tiempo real en la barra
-        function actualizarReloj12H() {
-            const ahora = new Date();
-            let horas = ahora.getHours();
-            const minutos = String(ahora.getMinutes()).padStart(2, '0');
-            const ampm = horas >= 12 ? 'PM' : 'AM';
-            
-            horas = horas % 12;
-            horas = horas ? horas : 12;
-            const horasStr = String(horas).padStart(2, '0');
-            
-            document.getElementById('reloj-12h').textContent = `${horasStr}:${minutos} ${ampm}`;
-        }
-        setInterval(actualizarReloj12H, 1000);
-
-        // Contador regresivo sincronizado para el cambio cada 5 minutos
-        let tiempoRestante = 300 - (Math.floor(Date.now() / 1000) % 300);
-
-        function actualizarContador() {
-            const min = String(Math.floor(tiempoRestante / 60)).padStart(2, '0');
-            const seg = String(tiempoRestante % 60).padStart(2, '0');
-            
-            document.getElementById('contador-cambio').textContent = `${min}:${seg}`;
-
-            if (tiempoRestante <= 0) {
-                location.reload();
-            } else {
-                tiempoRestante--;
+        document.addEventListener("DOMContentLoaded", function() {
+            // Reloj en tiempo real en la barra
+            function actualizarReloj12H() {
+                const ahora = new Date();
+                let horas = ahora.getHours();
+                const minutos = String(ahora.getMinutes()).padStart(2, '0');
+                const ampm = horas >= 12 ? 'PM' : 'AM';
+                
+                horas = horas % 12;
+                horas = horas ? horas : 12;
+                const horasStr = String(horas).padStart(2, '0');
+                
+                const relojEl = document.getElementById('reloj-12h');
+                if (relojEl) relojEl.textContent = `${horasStr}:${minutos} ${ampm}`;
             }
-        }
-        setInterval(actualizarContador, 1000);
-        actualizarContador();
+            setInterval(actualizarReloj12H, 1000);
+            actualizarReloj12H();
 
-        // Cargar registros automáticamente por AJAX cada 3 segundos sin refrescar la página
-        async function cargarTablaAsistencias() {
-            try {
-                const response = await fetch('?action=cargar_asistencias');
-                const result = await response.json();
+            // Contador regresivo sincronizado para el cambio cada 5 minutos
+            let tiempoRestante = 300 - (Math.floor(Date.now() / 1000) % 300);
 
-                if (result.success) {
-                    const tbody = document.getElementById('tabla-asistencia-body');
+            function actualizarContador() {
+                const min = String(Math.floor(tiempoRestante / 60)).padStart(2, '0');
+                const seg = String(tiempoRestante % 60).padStart(2, '0');
+                
+                const contadorEl = document.getElementById('contador-cambio');
+                if (contadorEl) contadorEl.textContent = `${min}:${seg}`;
+
+                if (tiempoRestante <= 0) {
+                    location.reload();
+                } else {
+                    tiempoRestante--;
+                }
+            }
+            setInterval(actualizarContador, 1000);
+            actualizarContador();
+
+            // Cargar registros consumiendo el archivo independiente obtener_asistencias_profesor.php
+            async function cargarTablaAsistencias() {
+                try {
+                    const response = await fetch('obtener_asistencias_profesor.php');
+                    const textData = await response.text();
                     
-                    if (result.data.length === 0) {
-                        tbody.innerHTML = `
-                            <tr>
-                                <td colspan="4" class="text-center py-5">
-                                    <div class="py-3">
-                                        <p class="mb-1 text-light">Esperando que los alumnos escaneen el código QR...</p>
-                                        <small class="text-subtle">Los registros aparecerán automáticamente en esta lista.</small>
-                                    </div>
-                                </td>
-                            </tr>`;
-                    } else {
-                        let html = '';
-                        result.data.forEach(item => {
-                            html += `
+                    let result;
+                    try {
+                        result = JSON.parse(textData);
+                    } catch (e) {
+                        console.error("Respuesta no válida JSON:", textData);
+                        return;
+                    }
+
+                    const tbody = document.getElementById('tabla-asistencia-body');
+                    if (!tbody) return;
+
+                    if (result.success) {
+                        if (!result.data || result.data.length === 0) {
+                            tbody.innerHTML = `
                                 <tr>
-                                    <td class="fw-semibold text-light">${item.nombre} ${item.apellido}</td>
-                                    <td><span class="badge bg-dark border border-secondary text-light">${item.grado_seccion}</span></td>
-                                    <td class="time-badge">${item.hora_registro}</td>
-                                    <td class="text-end">
-                                        <span class="badge bg-success border border-success px-3 py-2">${item.estado || 'Presente'}</span>
+                                    <td colspan="4" class="text-center py-5">
+                                        <div class="py-3">
+                                            <p class="mb-1 text-light">Esperando que los alumnos escaneen el código QR...</p>
+                                            <small class="text-subtle">Los registros aparecerán automáticamente en esta lista.</small>
+                                        </div>
                                     </td>
                                 </tr>`;
-                        });
-                        tbody.innerHTML = html;
+                        } else {
+                            let html = '';
+                            result.data.forEach(item => {
+                                html += `
+                                    <tr>
+                                        <td class="fw-semibold text-light">${item.nombre} ${item.apellido}</td>
+                                        <td><span class="badge bg-dark border border-secondary text-light">${item.grado_seccion || 'N/D'}</span></td>
+                                        <td class="time-badge">${item.hora_registro}</td>
+                                        <td class="text-end">
+                                            <span class="badge bg-success border border-success px-3 py-2">${item.estado || 'Presente'}</span>
+                                        </td>
+                                    </tr>`;
+                            });
+                            tbody.innerHTML = html;
+                        }
+                    } else {
+                        console.error("Error en servidor:", result.error);
                     }
+                } catch (error) {
+                    console.error("Error de red:", error);
                 }
-            } catch (error) {
-                console.error("Error al cargar asistencias:", error);
             }
-        }
 
-        setInterval(cargarTablaAsistencias, 3000);
-        cargarTablaAsistencias();
+            // Ejecutar inmediatamente al cargar y luego cada 3 segundos
+            cargarTablaAsistencias();
+            setInterval(cargarTablaAsistencias, 3000);
+        });
     </script>
 </body>
 </html>
