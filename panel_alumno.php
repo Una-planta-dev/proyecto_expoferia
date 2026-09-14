@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once 'conexion.php';
 
 // Validar que exista sesión y sea un alumno
@@ -17,6 +19,8 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>S Y N C A | Portal del Estudiante</title>
     <link rel="icon" type="image/png" href="logo-removebg-preview.png">
+    <!-- Librería para escanear códigos QR con la cámara -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -33,7 +37,6 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
             flex-direction: column;
         }
 
-        /* Navbar que ocupa todo el ancho */
         .top-navbar {
             width: 100%;
             background-color: #0d0d15;
@@ -80,7 +83,6 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
             color: #ffffff;
         }
 
-        /* Layout Main centrado */
         .main-wrapper {
             width: 100%;
             max-width: 1400px;
@@ -91,7 +93,6 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
             gap: 24px;
         }
 
-        /* Tarjetas estilo SYNCA */
         .synca-card {
             background-color: #1a1a27;
             border-radius: 12px;
@@ -100,7 +101,6 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
         }
 
-        /* Pestañas */
         .tab-group {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -126,7 +126,14 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
             border-color: #a855f7;
         }
 
-        /* Formulario PIN */
+        .section-content {
+            display: none;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
         .pin-section {
             text-align: center;
         }
@@ -176,7 +183,18 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
             background: #5b21b6;
         }
 
-        /* Tabla */
+        #reader {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #2e2a45;
+            background: #12121c;
+        }
+        
+        #reader video {
+            border-radius: 8px;
+        }
+
         .table-title {
             font-size: 1.2rem;
             margin-bottom: 20px;
@@ -220,7 +238,6 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 </head>
 <body>
 
-    <!-- Header / Navbar a pantalla completa -->
     <header class="top-navbar">
         <div class="navbar-brand">
             S Y N C A <span>| Portal del Estudiante</span>
@@ -231,28 +248,40 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
         </div>
     </header>
 
-    <!-- Contenido Principal -->
     <main class="main-wrapper">
         
-        <!-- Tarjeta de Código PIN -->
         <section class="synca-card">
+            <!-- Por defecto inicia seleccionado Código PIN -->
             <div class="tab-group">
-                <button type="button" class="tab-btn" onclick="alert('Escaner en desarrollo')">📷 Escanear QR</button>
-                <button type="button" class="tab-btn active">🔑 Código PIN</button>
+                <button type="button" class="tab-btn" id="btn-tab-qr" onclick="cambiarTab('qr')">📷 Escanear QR</button>
+                <button type="button" class="tab-btn active" id="btn-tab-pin" onclick="cambiarTab('pin')">🔑 Código PIN</button>
             </div>
 
-            <div class="pin-section">
-                <h3>Ingresar Código de Clase</h3>
-                <p>Si no puedes escanear el QR, digita aquí el PIN o código de la clase:</p>
-                
-                <form action="procesar_asistencia.php" method="POST">
-                    <input type="text" name="codigo_pin" class="pin-input" placeholder="0 0 0 0 0 0" maxlength="25" required autocomplete="off">
-                    <button type="submit" class="btn-submit">Registrar Entrada</button>
-                </form>
+            <!-- SECCIÓN ESCANER QR (Oculta por defecto) -->
+            <div id="seccion-qr" class="section-content">
+                <div class="pin-section">
+                    <h3>Apunta con tu cámara</h3>
+                    <p>Enfoca el código QR generado por tu docente para registrar tu asistencia automáticamente:</p>
+                    
+                    <div id="reader"></div>
+                    <p id="qr-resultado" style="margin-top: 15px; font-size: 0.85rem; color: #a855f7;"></p>
+                </div>
+            </div>
+
+            <!-- SECCIÓN CÓDIGO PIN (Visible por defecto con formato numeral) -->
+            <div id="seccion-pin" class="section-content active">
+                <div class="pin-section">
+                    <h3>Ingresar Código de Clase</h3>
+                    <p>Si no puedes escanear el QR, digita aquí el PIN o código de la clase:</p>
+                    
+                    <form action="procesar_asistencia.php" method="POST">
+                        <input type="text" name="codigo_pin" class="pin-input" placeholder="# # # # # #" required autocomplete="off">
+                        <button type="submit" class="btn-submit">Registrar Entrada</button>
+                    </form>
+                </div>
             </div>
         </section>
 
-        <!-- Tarjeta de Historial -->
         <section class="synca-card">
             <h2 class="table-title">Mi Historial de Asistencias</h2>
 
@@ -265,7 +294,7 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
                         <th>Estado</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="historial-asistencia-body">
                     <tr>
                         <td colspan="4" class="empty-state">
                             Cargando asistencias...
@@ -277,5 +306,119 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
     </main>
 
+    <script>
+        let html5QrCode = null;
+
+        function cambiarTab(tipo) {
+            const tabQr = document.getElementById('btn-tab-qr');
+            const tabPin = document.getElementById('btn-tab-pin');
+            const secQr = document.getElementById('seccion-qr');
+            const secPin = document.getElementById('seccion-pin');
+
+            if (tipo === 'qr') {
+                tabQr.classList.add('active');
+                tabPin.classList.remove('active');
+                secQr.classList.add('active');
+                secPin.classList.remove('active');
+                iniciarEscanner(); // Solo aquí se enciende la cámara
+            } else {
+                tabPin.classList.add('active');
+                tabQr.classList.remove('active');
+                secPin.classList.add('active');
+                secQr.classList.remove('active');
+                detenerEscanner(); // Se apaga la cámara al salir de la pestaña
+            }
+        }
+
+        function iniciarEscanner() {
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+            
+            // Verificamos si ya está escaneando para no relanzarlo en bucle
+            if (!html5QrCode.isScanning) {
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    {
+                        fps: 10,
+                        qrbox: { width: 220, height: 220 }
+                    },
+                    async (decodedText) => {
+                        document.getElementById('qr-resultado').innerText = "¡Código detectado! Procesando...";
+                        await detenerEscanner();
+
+                        let form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'procesar_asistencia.php';
+
+                        let input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'codigo_pin';
+                        input.value = decodedText;
+
+                        form.appendChild(input);
+                        document.body.appendChild(form);
+                        form.submit();
+                    },
+                    (errorMessage) => {}
+                ).catch(err => {
+                    console.error("No se pudo iniciar la cámara:", err);
+                    document.getElementById('qr-resultado').innerText = "⚠️ No se pudo acceder a la cámara o permisos denegados.";
+                });
+            }
+        }
+
+        async function detenerEscanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                try {
+                    await html5QrCode.stop();
+                } catch (err) {
+                    console.error("Error al detener el escáner:", err);
+                }
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            async function cargarHistorialAlumno() {
+                try {
+                    const response = await fetch('obtener_asistencias_alumno.php');
+                    const textResponse = await response.text();
+                    
+                    let result;
+                    try {
+                        result = JSON.parse(textResponse);
+                    } catch (e) {
+                        return;
+                    }
+
+                    const tbody = document.getElementById('historial-asistencia-body');
+                    if (!tbody) return;
+
+                    if (result.success) {
+                        if (!result.data || result.data.length === 0) {
+                            tbody.innerHTML = `<tr><td colspan="4" class="empty-state">No tienes asistencias registradas todavía.</td></tr>`;
+                        } else {
+                            let html = '';
+                            result.data.forEach(item => {
+                                html += `
+                                    <tr>
+                                        <td>${item.fecha}</td>
+                                        <td style="color: #a855f7; font-weight: 600;">${item.hora_registro}</td>
+                                        <td>${item.asignatura}</td>
+                                        <td><span style="background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid #22c55e; padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">${item.estado}</span></td>
+                                    </tr>`;
+                            });
+                            tbody.innerHTML = html;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error de red:", error);
+                }
+            }
+
+            cargarHistorialAlumno();
+            setInterval(cargarHistorialAlumno, 3000);
+        });
+    </script>
 </body>
 </html>
