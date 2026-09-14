@@ -242,15 +242,16 @@ $fecha_actual = date('d/m/Y');
                         <table class="table table-dark-custom align-middle mb-0">
                             <thead>
                                 <tr>
-                                    <th>Estudiante</th>
-                                    <th>Grado / Sección</th>
-                                    <th>Hora de Entrada (12h)</th>
-                                    <th class="text-end">Estado</th>
+                                    <th>Alumno</th>
+                                    <th>Grado</th>
+                                    <th>Sección</th>
+                                    <th>Hora de Entrada</th>
+                                    <th>Estado / Modificación</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-asistencia-body">
                                 <tr>
-                                    <td colspan="4" class="text-center py-5">
+                                    <td colspan="5" class="text-center py-5">
                                         <div class="py-3">
                                             <p class="mb-1 text-light">Cargando registros...</p>
                                         </div>
@@ -325,7 +326,7 @@ $fecha_actual = date('d/m/Y');
                         if (!result.data || result.data.length === 0) {
                             tbody.innerHTML = `
                                 <tr>
-                                    <td colspan="4" class="text-center py-5">
+                                    <td colspan="5" class="text-center py-5">
                                         <div class="py-3">
                                             <p class="mb-1 text-light">Esperando que los alumnos escaneen el código QR...</p>
                                             <small class="text-subtle">Los registros aparecerán automáticamente en esta lista.</small>
@@ -335,13 +336,36 @@ $fecha_actual = date('d/m/Y');
                         } else {
                             let html = '';
                             result.data.forEach(item => {
+                                let selATiempo = (item.estado === 'A tiempo' || !item.estado) ? 'selected' : '';
+                                let selTarde = item.estado === 'Tarde' ? 'selected' : '';
+                                let observacion = item.observacion || '';
+
+                                // Nota: Asumimos que item.grado y item.seccion vendrán separados desde tu archivo JSON backend. 
+                                // Si antes venían unidos como 'grado_seccion', recuerda actualizar tu script JSON para separarlos.
+                                let gradoTexto = item.grado || 'N/D';
+                                let seccionTexto = item.seccion || (item.grado_seccion || 'N/D');
+
                                 html += `
                                     <tr>
-                                        <td class="fw-semibold text-light">${item.nombre} ${item.apellido}</td>
-                                        <td><span class="badge bg-dark border border-secondary text-light">${item.grado_seccion || 'N/D'}</span></td>
+                                        <td class="fw-semibold text-light">
+                                            ${item.nombre} ${item.apellido}
+                                        </td>
+                                        <td class="text-light">${gradoTexto}</td>
+                                        <td>
+                                            <span class="badge bg-secondary">${seccionTexto}</span>
+                                        </td>
                                         <td class="time-badge">${item.hora_registro}</td>
-                                        <td class="text-end">
-                                            <span class="badge bg-success border border-success px-3 py-2">${item.estado || 'Presente'}</span>
+                                        <td>
+                                            <div class="d-flex flex-column gap-2">
+                                                <div class="input-group input-group-sm">
+                                                    <select class="form-select form-select-sm bg-dark text-light border-secondary" id="estado_${item.id_asistencia}">
+                                                        <option value="A tiempo" ${selATiempo}>🟢 A tiempo</option>
+                                                        <option value="Tarde" ${selTarde}>🟡 Tarde</option>
+                                                    </select>
+                                                    <button class="btn btn-purple btn-sm px-3" onclick="guardarEstado(${item.id_asistencia})">Guardar</button>
+                                                </div>
+                                                <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" id="obs_${item.id_asistencia}" placeholder="Motivo o nota (opcional)..." value="${observacion}">
+                                            </div>
                                         </td>
                                     </tr>`;
                             });
@@ -359,6 +383,32 @@ $fecha_actual = date('d/m/Y');
             cargarTablaAsistencias();
             setInterval(cargarTablaAsistencias, 3000);
         });
+
+        // Función global para guardar el estado y la observación de cada alumno individualmente
+        async function guardarEstado(idAsistencia) {
+            const estado = document.getElementById(`estado_${idAsistencia}`).value;
+            const observacion = document.getElementById(`obs_${idAsistencia}`).value;
+
+            try {
+                const response = await fetch('actualizar_estado_asistencia.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `id_asistencia=${idAsistencia}&estado=${encodeURIComponent(estado)}&observacion=${encodeURIComponent(observacion)}`
+                });
+
+                const resultado = await response.json();
+                if (resultado.success) {
+                    alert('¡Estado y observación guardados correctamente!');
+                } else {
+                    alert('Error al guardar: ' + (resultado.error || 'Desconocido'));
+                }
+            } catch (error) {
+                console.error('Error de red:', error);
+                alert('Error de conexión al intentar guardar.');
+            }
+        }
     </script>
 </body>
 </html>
