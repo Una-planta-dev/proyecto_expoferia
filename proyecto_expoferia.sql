@@ -2,10 +2,10 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1
--- Tiempo de generación: 08-09-2026 a las 02:37:01
--- Versión del servidor: 10.4.32-MariaDB
--- Versión de PHP: 8.2.12
+-- Host: 127.0.0.1
+-- Generation Time: Sep 15, 2026 at 12:51 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,13 +18,13 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Base de datos: `proyecto_expoferia`
+-- Database: `proyecto_expoferia`
 --
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `anio_escolar`
+-- Table structure for table `anio_escolar`
 --
 
 CREATE TABLE `anio_escolar` (
@@ -37,7 +37,7 @@ CREATE TABLE `anio_escolar` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `asignacion`
+-- Table structure for table `asignacion`
 --
 
 CREATE TABLE `asignacion` (
@@ -48,10 +48,17 @@ CREATE TABLE `asignacion` (
   `id_anio` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `asignacion`
+--
+
+INSERT INTO `asignacion` (`id_asignacion`, `id_profesor`, `id_materias`, `id_seccion`, `id_anio`) VALUES
+(1, 1, 0, 0, 0);
+
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `asistencia`
+-- Table structure for table `asistencia`
 --
 
 CREATE TABLE `asistencia` (
@@ -59,13 +66,26 @@ CREATE TABLE `asistencia` (
   `id_estudiante` int(11) NOT NULL,
   `id_clase` int(11) NOT NULL,
   `hora_registro` datetime NOT NULL,
-  `estado` enum('asistio',' tarde','justificado','injustificada') NOT NULL
+  `estado` enum('asistio',' tarde','justificado','injustificada') NOT NULL,
+  `id_profesor` int(11) DEFAULT NULL,
+  `fecha_registro` date DEFAULT NULL,
+  `observacion` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `asistencia`
+--
+
+INSERT INTO `asistencia` (`id_asistencia`, `id_estudiante`, `id_clase`, `hora_registro`, `estado`, `id_profesor`, `fecha_registro`, `observacion`) VALUES
+(4, 1, 1, '2026-09-12 16:23:11', '', 7, '2026-09-12', NULL),
+(36, 2, 1, '2026-09-12 16:27:02', '', 7, '2026-09-12', NULL),
+(40, 2, 1, '2026-09-13 21:54:08', '', 7, '2026-09-13', NULL),
+(41, 1, 1, '2026-09-13 22:03:41', '', 7, '2026-09-13', NULL);
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `clase`
+-- Table structure for table `clase`
 --
 
 CREATE TABLE `clase` (
@@ -73,13 +93,21 @@ CREATE TABLE `clase` (
   `fecha` date NOT NULL,
   `hora_inicio` time NOT NULL,
   `hora_fin` time NOT NULL,
-  `id_asignacion` int(11) NOT NULL
+  `id_asignacion` int(11) NOT NULL,
+  `codigo_pin` varchar(50) DEFAULT '11'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `clase`
+--
+
+INSERT INTO `clase` (`id_clase`, `fecha`, `hora_inicio`, `hora_fin`, `id_asignacion`, `codigo_pin`) VALUES
+(1, '2026-09-11', '07:00:00', '13:00:00', 1, '11');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `codigo_qr`
+-- Table structure for table `codigo_qr`
 --
 
 CREATE TABLE `codigo_qr` (
@@ -94,7 +122,18 @@ CREATE TABLE `codigo_qr` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `estudiante`
+-- Table structure for table `especialidad`
+--
+
+CREATE TABLE `especialidad` (
+  `id_especialidad` int(11) NOT NULL,
+  `nombre` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `estudiante`
 --
 
 CREATE TABLE `estudiante` (
@@ -103,20 +142,22 @@ CREATE TABLE `estudiante` (
   `apellido` varchar(50) NOT NULL,
   `nie` varchar(8) NOT NULL,
   `correo_institucional` varchar(250) NOT NULL,
-  `contraseña` varchar(255) DEFAULT NULL
+  `contraseina` varchar(255) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `estudiante`
+-- Dumping data for table `estudiante`
 --
 
-INSERT INTO `estudiante` (`id_estudiante`, `nombre`, `apellido`, `nie`, `correo_institucional`, `contraseña`) VALUES
-(1, 'Emerson Steven', 'Girón Garcís', '6370065', '6370065@clases.edu.sv', '$2y$10$TccPsTvDhiFptlXLeRyhKOPshju3fYwt5fakK5po5OX7ZT5oHNUAK');
+INSERT INTO `estudiante` (`id_estudiante`, `nombre`, `apellido`, `nie`, `correo_institucional`, `contraseina`) VALUES
+(1, 'jose', 'rodriguez', '12345678', '1234511@clases.edu.sv', '$2y$10$T42mGGWUXZ2NHzheUwd03uq4AV2Dv6ebIFAeN.5fY9U4yPTiBHzJK'),
+(2, 'jose', 'rodriguez1', '12345679', '1234512@clases.edu.sv', '$2y$10$JUo5bJ04wn6lV9E5lW9Rxe.qe.0cTPz.ZZvROPmEQMMXBpv92MRXu'),
+(3, 'jose', 'rodriguez2', '12345612', '1234513@clases.edu.sv', '$2y$10$nmLkp3RThrTlwOoCdwCi1e.9gPWFFLKpnd6HPBu7CGsS5r4t07DoS');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `horario`
+-- Table structure for table `horario`
 --
 
 CREATE TABLE `horario` (
@@ -130,7 +171,7 @@ CREATE TABLE `horario` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `materias`
+-- Table structure for table `materias`
 --
 
 CREATE TABLE `materias` (
@@ -141,7 +182,7 @@ CREATE TABLE `materias` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `matricula`
+-- Table structure for table `matricula`
 --
 
 CREATE TABLE `matricula` (
@@ -155,7 +196,7 @@ CREATE TABLE `matricula` (
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `profesor`
+-- Table structure for table `profesor`
 --
 
 CREATE TABLE `profesor` (
@@ -168,38 +209,43 @@ CREATE TABLE `profesor` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Volcado de datos para la tabla `profesor`
+-- Dumping data for table `profesor`
 --
 
 INSERT INTO `profesor` (`id_profesor`, `nombre`, `apellido`, `telefono`, `correo_institucional`, `contraseña`) VALUES
-(1, 'Roberto', 'Gomez', '7890-1234', 'roberto.gomez@clases.edu.sv', '$2y$10$OXaaZkhFk2wBOdc7FCmFTOwdkWAc3OFeWo1NQVMP7PAG0kKfDKUPO'),
-(2, 'Emerson Steven', 'Girón Garcís', '6116-6667', '6370065@clases.edu.sv', '$2y$10$H1iE/F0W.U3KcuAyyFsVs.LBIIKJ3BBiExxlOoKli.Sd8IcFkHcc6');
+(1, 'lose', 'oh', '1234510', '12345678@clases.edu.sv', '$2y$10$dB99ogrOWUMAM.udYMqFsOa2944mt4sOEdWh6LXaumUJ6RHM5vM2q'),
+(2, 'jose levi lopez e', 'ohq', '12345102', '1234525678@clases.edu.sv', '$2y$10$uR8mIWmRtwmgkGaYtv8/oeSF6IXhSeZ.W0HzR27IiFwToCZLyoCam'),
+(3, 'losee', 'ohr', '12345110', '123495678@clases.edu.sv', '$2y$10$oIWbpvWFNLETJVkF9Txm2.UYrPregWs45r6pZl/W9U.qPvR678ARG'),
+(4, 'loseew', 'ohr', '123245110', '1233495678@clases.edu.sv', '$2y$10$PX8ByP7WWsWOjxTjXWhPyO69Ff0H9JUoHSGQOGooBT7cl9xQfeLQ6'),
+(5, 'fgdb', 'asd', '1245678', '1245678@clases.edu.sv', '$2y$10$AjRe8HYiBO0LZWSqF6/Vk./w1.DL1vaD9LjyzfxQuGrCFBfWVkHTC'),
+(6, 'loseq', 'dsf', '9876543', '098765431@clases.edu.sv', '$2y$10$kLvtBnHwXKVv8Q/ovcnOIuPf8DsJ/pwiYChe/wG8jJ50x9qfS0HnO'),
+(7, 'ala', 'lopz', '1234511', '1234510@clases.edu.sv', '$2y$10$fFX10anlUTDdBo.tu50T5e/3FFNMCQJnRyDyMoamraDmK9wmBZUdy');
 
 -- --------------------------------------------------------
 
 --
--- Estructura de tabla para la tabla `seccion`
+-- Table structure for table `seccion`
 --
 
 CREATE TABLE `seccion` (
   `id_seccion` int(11) NOT NULL,
   `grado` varchar(20) NOT NULL,
   `seccion` varchar(20) NOT NULL,
-  `especialidad` varchar(50) NOT NULL
+  `id_especialidad` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Índices para tablas volcadas
+-- Indexes for dumped tables
 --
 
 --
--- Indices de la tabla `anio_escolar`
+-- Indexes for table `anio_escolar`
 --
 ALTER TABLE `anio_escolar`
   ADD PRIMARY KEY (`id_anio`);
 
 --
--- Indices de la tabla `asignacion`
+-- Indexes for table `asignacion`
 --
 ALTER TABLE `asignacion`
   ADD PRIMARY KEY (`id_asignacion`),
@@ -209,48 +255,53 @@ ALTER TABLE `asignacion`
   ADD KEY `id_anio` (`id_anio`);
 
 --
--- Indices de la tabla `asistencia`
+-- Indexes for table `asistencia`
 --
 ALTER TABLE `asistencia`
   ADD PRIMARY KEY (`id_asistencia`),
-  ADD UNIQUE KEY `id_estudiante` (`id_estudiante`,`id_clase`),
   ADD KEY `id_clase` (`id_clase`);
 
 --
--- Indices de la tabla `clase`
+-- Indexes for table `clase`
 --
 ALTER TABLE `clase`
   ADD PRIMARY KEY (`id_clase`),
   ADD KEY `id_asignacion` (`id_asignacion`);
 
 --
--- Indices de la tabla `codigo_qr`
+-- Indexes for table `codigo_qr`
 --
 ALTER TABLE `codigo_qr`
   ADD PRIMARY KEY (`id_qr`),
   ADD KEY `id_clase` (`id_clase`);
 
 --
--- Indices de la tabla `estudiante`
+-- Indexes for table `especialidad`
+--
+ALTER TABLE `especialidad`
+  ADD PRIMARY KEY (`id_especialidad`);
+
+--
+-- Indexes for table `estudiante`
 --
 ALTER TABLE `estudiante`
   ADD PRIMARY KEY (`id_estudiante`);
 
 --
--- Indices de la tabla `horario`
+-- Indexes for table `horario`
 --
 ALTER TABLE `horario`
   ADD PRIMARY KEY (`id_horario`),
   ADD KEY `id_asignacion` (`id_asignacion`);
 
 --
--- Indices de la tabla `materias`
+-- Indexes for table `materias`
 --
 ALTER TABLE `materias`
   ADD PRIMARY KEY (`id_materias`);
 
 --
--- Indices de la tabla `matricula`
+-- Indexes for table `matricula`
 --
 ALTER TABLE `matricula`
   ADD PRIMARY KEY (`id_matricula`),
@@ -259,93 +310,100 @@ ALTER TABLE `matricula`
   ADD KEY `id_anio` (`id_anio`);
 
 --
--- Indices de la tabla `profesor`
+-- Indexes for table `profesor`
 --
 ALTER TABLE `profesor`
   ADD PRIMARY KEY (`id_profesor`);
 
 --
--- Indices de la tabla `seccion`
+-- Indexes for table `seccion`
 --
 ALTER TABLE `seccion`
-  ADD PRIMARY KEY (`id_seccion`);
+  ADD PRIMARY KEY (`id_seccion`),
+  ADD KEY `id_especialidad` (`id_especialidad`);
 
 --
--- AUTO_INCREMENT de las tablas volcadas
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT de la tabla `anio_escolar`
+-- AUTO_INCREMENT for table `anio_escolar`
 --
 ALTER TABLE `anio_escolar`
   MODIFY `id_anio` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `asignacion`
+-- AUTO_INCREMENT for table `asignacion`
 --
 ALTER TABLE `asignacion`
-  MODIFY `id_asignacion` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_asignacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT de la tabla `asistencia`
+-- AUTO_INCREMENT for table `asistencia`
 --
 ALTER TABLE `asistencia`
-  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
 
 --
--- AUTO_INCREMENT de la tabla `clase`
+-- AUTO_INCREMENT for table `clase`
 --
 ALTER TABLE `clase`
-  MODIFY `id_clase` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_clase` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
--- AUTO_INCREMENT de la tabla `codigo_qr`
+-- AUTO_INCREMENT for table `codigo_qr`
 --
 ALTER TABLE `codigo_qr`
   MODIFY `id_qr` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `estudiante`
+-- AUTO_INCREMENT for table `especialidad`
 --
-ALTER TABLE `estudiante`
-  MODIFY `id_estudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+ALTER TABLE `especialidad`
+  MODIFY `id_especialidad` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `horario`
+-- AUTO_INCREMENT for table `estudiante`
+--
+ALTER TABLE `estudiante`
+  MODIFY `id_estudiante` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `horario`
 --
 ALTER TABLE `horario`
   MODIFY `id_horario` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `materias`
+-- AUTO_INCREMENT for table `materias`
 --
 ALTER TABLE `materias`
   MODIFY `id_materias` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `matricula`
+-- AUTO_INCREMENT for table `matricula`
 --
 ALTER TABLE `matricula`
   MODIFY `id_matricula` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de la tabla `profesor`
+-- AUTO_INCREMENT for table `profesor`
 --
 ALTER TABLE `profesor`
-  MODIFY `id_profesor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_profesor` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- AUTO_INCREMENT de la tabla `seccion`
+-- AUTO_INCREMENT for table `seccion`
 --
 ALTER TABLE `seccion`
   MODIFY `id_seccion` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- Restricciones para tablas volcadas
+-- Constraints for dumped tables
 --
 
 --
--- Filtros para la tabla `asignacion`
+-- Constraints for table `asignacion`
 --
 ALTER TABLE `asignacion`
   ADD CONSTRAINT `asignacion_ibfk_1` FOREIGN KEY (`id_profesor`) REFERENCES `profesor` (`id_profesor`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -354,37 +412,43 @@ ALTER TABLE `asignacion`
   ADD CONSTRAINT `asignacion_ibfk_4` FOREIGN KEY (`id_anio`) REFERENCES `anio_escolar` (`id_anio`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `asistencia`
+-- Constraints for table `asistencia`
 --
 ALTER TABLE `asistencia`
   ADD CONSTRAINT `asistencia_ibfk_1` FOREIGN KEY (`id_estudiante`) REFERENCES `estudiante` (`id_estudiante`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `asistencia_ibfk_2` FOREIGN KEY (`id_clase`) REFERENCES `clase` (`id_clase`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `clase`
+-- Constraints for table `clase`
 --
 ALTER TABLE `clase`
   ADD CONSTRAINT `clase_ibfk_1` FOREIGN KEY (`id_asignacion`) REFERENCES `asignacion` (`id_asignacion`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `codigo_qr`
+-- Constraints for table `codigo_qr`
 --
 ALTER TABLE `codigo_qr`
   ADD CONSTRAINT `codigo_qr_ibfk_1` FOREIGN KEY (`id_clase`) REFERENCES `clase` (`id_clase`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `horario`
+-- Constraints for table `horario`
 --
 ALTER TABLE `horario`
   ADD CONSTRAINT `horario_ibfk_1` FOREIGN KEY (`id_asignacion`) REFERENCES `asignacion` (`id_asignacion`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
--- Filtros para la tabla `matricula`
+-- Constraints for table `matricula`
 --
 ALTER TABLE `matricula`
   ADD CONSTRAINT `matricula_ibfk_1` FOREIGN KEY (`id_estudiante`) REFERENCES `estudiante` (`id_estudiante`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `matricula_ibfk_2` FOREIGN KEY (`id_seccion`) REFERENCES `seccion` (`id_seccion`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `matricula_ibfk_3` FOREIGN KEY (`id_anio`) REFERENCES `anio_escolar` (`id_anio`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `seccion`
+--
+ALTER TABLE `seccion`
+  ADD CONSTRAINT `seccion_ibfk_1` FOREIGN KEY (`id_especialidad`) REFERENCES `especialidad` (`id_especialidad`) ON DELETE CASCADE ON UPDATE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
