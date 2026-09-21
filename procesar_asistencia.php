@@ -80,30 +80,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        $fecha_hoy = date('Y-m-d');
-
-        // 3. VERIFICAR SI EL ALUMNO YA REGISTRÓ ASISTENCIA HOY PARA ESTA CLASE / PROFESOR
-        $stmtVerificar = $conexion->prepare("
-            SELECT id_asistencia FROM asistencia 
-            WHERE id_estudiante = :id_estudiante 
-              AND id_clase = :id_clase 
-              AND fecha_registro = :fecha_hoy
-        ");
-        $stmtVerificar->execute([
-            ':id_estudiante' => $id_estudiante,
-            ':id_clase' => $id_clase,
-            ':fecha_hoy' => $fecha_hoy
-        ]);
-
-        if ($stmtVerificar->rowCount() > 0) {
-            // Ya registró asistencia hoy
-            echo "<script>alert('⚠️ Ya habías ingresado tu asistencia para esta clase el día de hoy.'); window.location='panel_alumno.php';</script>";
-            exit();
-        }
-
-        // 4. INSERTAR NUEVA ASISTENCIA
+        // 3. Registrar o actualizar la asistencia INCLUYENDO el id_profesor para que aparezca en el panel del docente
         $sql = "INSERT INTO asistencia (id_estudiante, id_clase, id_profesor, fecha_registro, hora_registro, estado) 
-                VALUES (:id_estudiante, :id_clase, :id_profesor, CURDATE(), CURTIME(), 'Presente')";
+                VALUES (:id_estudiante, :id_clase, :id_profesor, CURDATE(), CURTIME(), 'Presente')
+                ON DUPLICATE KEY UPDATE 
+                id_profesor = :id_profesor,
+                fecha_registro = CURDATE(),
+                hora_registro = CURTIME(),
+                estado = 'Presente'";
         
         $stmt = $conexion->prepare($sql);
         $stmt->execute([
@@ -123,4 +107,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: panel_alumno.php");
     exit();
 }
-?>
