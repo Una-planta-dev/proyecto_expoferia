@@ -46,7 +46,7 @@
                     <label class="remember">
                         <input type="checkbox" name="remember"> Recordarme 
                     </label>
-                    <a href="#" class="forgot-pass">¿Olvidaste tu contraseña?</a>
+                    <a href="recuperar.php" class="forgot-pass">¿Olvidaste tu contraseña?</a>
                 </div>
 
                 <button type="submit">Iniciar sesión</button>

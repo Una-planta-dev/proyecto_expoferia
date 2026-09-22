@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 15, 2026 at 12:51 AM
+-- Generation Time: Sep 22, 2026 at 05:43 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -66,21 +66,20 @@ CREATE TABLE `asistencia` (
   `id_estudiante` int(11) NOT NULL,
   `id_clase` int(11) NOT NULL,
   `hora_registro` datetime NOT NULL,
-  `estado` enum('asistio',' tarde','justificado','injustificada') NOT NULL,
   `id_profesor` int(11) DEFAULT NULL,
   `fecha_registro` date DEFAULT NULL,
-  `observacion` varchar(255) DEFAULT NULL
+  `observacion` varchar(255) DEFAULT NULL,
+  `estado` varchar(30) DEFAULT 'A tiempo'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `asistencia`
 --
 
-INSERT INTO `asistencia` (`id_asistencia`, `id_estudiante`, `id_clase`, `hora_registro`, `estado`, `id_profesor`, `fecha_registro`, `observacion`) VALUES
-(4, 1, 1, '2026-09-12 16:23:11', '', 7, '2026-09-12', NULL),
-(36, 2, 1, '2026-09-12 16:27:02', '', 7, '2026-09-12', NULL),
-(40, 2, 1, '2026-09-13 21:54:08', '', 7, '2026-09-13', NULL),
-(41, 1, 1, '2026-09-13 22:03:41', '', 7, '2026-09-13', NULL);
+INSERT INTO `asistencia` (`id_asistencia`, `id_estudiante`, `id_clase`, `hora_registro`, `id_profesor`, `fecha_registro`, `observacion`, `estado`) VALUES
+(40, 2, 1, '2026-09-13 21:54:08', 7, '2026-09-13', NULL, 'A tiempo'),
+(41, 1, 1, '2026-09-13 22:03:41', 7, '2026-09-13', NULL, 'A tiempo'),
+(42, 1, 1, '2026-09-22 07:03:14', 7, '2026-09-22', 'queso', 'Tarde');
 
 -- --------------------------------------------------------
 
@@ -342,7 +341,7 @@ ALTER TABLE `asignacion`
 -- AUTO_INCREMENT for table `asistencia`
 --
 ALTER TABLE `asistencia`
-  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=42;
+  MODIFY `id_asistencia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- AUTO_INCREMENT for table `clase`
@@ -410,13 +409,6 @@ ALTER TABLE `asignacion`
   ADD CONSTRAINT `asignacion_ibfk_2` FOREIGN KEY (`id_materias`) REFERENCES `materias` (`id_materias`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `asignacion_ibfk_3` FOREIGN KEY (`id_seccion`) REFERENCES `seccion` (`id_seccion`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `asignacion_ibfk_4` FOREIGN KEY (`id_anio`) REFERENCES `anio_escolar` (`id_anio`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `asistencia`
---
-ALTER TABLE `asistencia`
-  ADD CONSTRAINT `asistencia_ibfk_1` FOREIGN KEY (`id_estudiante`) REFERENCES `estudiante` (`id_estudiante`) ON DELETE CASCADE ON UPDATE CASCADE,
-  ADD CONSTRAINT `asistencia_ibfk_2` FOREIGN KEY (`id_clase`) REFERENCES `clase` (`id_clase`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `clase`
