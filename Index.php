@@ -74,7 +74,7 @@
     <!-- Barra de navegación -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom px-4 sticky-top">
         <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="pagina_principal.php">
+            <a class="navbar-brand d-flex align-items-center fw-bold" href="Index.php">
     <img src="logo-removebg-preview.png" alt="Logo Synca" height="65" class="me-2 d-inline-block align-text-top">
     Synca
 </a>
