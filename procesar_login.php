@@ -12,6 +12,17 @@ if ($_SERVER["REQUEST_METHOD"] == 'POST') {
         exit();
     }
 
+    // --- 🛡️ 0. VALIDACIÓN DE ADMINISTRADOR GENERAL ---
+    if ($correo === 'admin@clases.edu.sv' && $password === '12345') {
+        $_SESSION['id_admin'] = 1;
+        $_SESSION['nombre'] = 'Director General';
+        $_SESSION['rol'] = 'admin';
+
+        session_write_close();
+        echo "<script>window.location.href = 'panel_admin.php';</script>";
+        exit();
+    }
+
     try {
         // --- 1. BUSCAR EN ESTUDIANTES ---
         $query_est = "SELECT * FROM estudiante WHERE correo_institucional = :correo";

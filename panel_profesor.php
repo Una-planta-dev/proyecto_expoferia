@@ -13,16 +13,14 @@ if (!isset($_SESSION['id_profesor'])) {
     exit();
 }
 
-$id_profesor = $_SESSION['id_profesor'];
+$id_profesor =$_SESSION['id_profesor'];
 
 // Obtener datos del profesor
 try {
-    $stmt = $conexion->prepare("SELECT nombre, apellido FROM profesor WHERE id_profesor = :id");
-    $stmt->execute([':id' => $id_profesor]);
-    $profesor = $stmt->fetch(PDO::FETCH_ASSOC);
-    $nombre_profesor = $profesor ? $profesor['nombre'] . ' ' . $profesor['apellido'] : ($_SESSION['nombre'] ?? 'Docente');
+    $stmt =$conexion->prepare("SELECT nombre, apellido FROM profesor WHERE id_profesor = :id");
+    $stmt->execute([':id' => $id_profesor]);$profesor = $stmt->fetch(PDO::FETCH_ASSOC);$nombre_profesor = $profesor ? $profesor['nombre'] . ' ' . $profesor['apellido'] : ($_SESSION['nombre'] ?? 'Docente');
 } catch (PDOException $e) {
-    $nombre_profesor = $_SESSION['nombre'] ?? 'Docente';
+    $nombre_profesor =$_SESSION['nombre'] ?? 'Docente';
 }
 
 // -------------------------------------------------------------------
@@ -31,14 +29,13 @@ try {
 $tiempo_actual = time();
 $bloque_5min = floor($tiempo_actual / 300); 
 
-$semilla = $id_profesor . '_' . $bloque_5min;
+$semilla = $id_profesor . '_' .$bloque_5min;
 $codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
 
 $codigo_manual = "SYN-" . date('Ymd') . "-" . $codigo_hash;
 $datos_qr = "ASISTENCIA_" . $id_profesor . "_" . $bloque_5min . "_" . $codigo_hash;
 
-$hora_12h = date('h:i A'); 
-$fecha_actual = date('d/m/Y');
+$hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
 ?>
 
 <!DOCTYPE html>
@@ -175,7 +172,7 @@ $fecha_actual = date('d/m/Y');
     <nav class="navbar-docente d-flex justify-content-between align-items-center">
         <div class="d-flex align-items-center gap-2">
             <span class="brand-logo">S Y N C A</span>
-            <span class="text-subtle fs-6">| Panel de Control</span>
+            <span class="text-subtle fs-6">| Panel de Control Docente</span>
         </div>
         <div class="d-flex align-items-center gap-3">
             <span class="text-light">👨‍🏫 Prof. <b><?= htmlspecialchars($nombre_profesor) ?></b></span>
@@ -189,7 +186,7 @@ $fecha_actual = date('d/m/Y');
         <div class="banner-purple d-flex justify-content-between align-items-center shadow-lg">
             <div>
                 <h4 class="fw-bold mb-1">Sistema de Control de Asistencia</h4>
-                <p class="mb-0 text-light-50 small">Gestión y registro digital por código QR para la expoferia 2026.</p>
+                <p class="mb-0 text-light-50 small">Gestión y registro digital sincronizado con el panel de administración.</p>
             </div>
             <span class="badge badge-purple fs-6 px-3 py-2">Estado: Clase Activa</span>
         </div>
@@ -269,7 +266,7 @@ $fecha_actual = date('d/m/Y');
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Reloj en tiempo real en la barra
+            // Reloj en tiempo real
             function actualizarReloj12H() {
                 const ahora = new Date();
                 let horas = ahora.getHours();
@@ -305,7 +302,7 @@ $fecha_actual = date('d/m/Y');
             setInterval(actualizarContador, 1000);
             actualizarContador();
 
-            // Cargar registros consumiendo el archivo independiente obtener_asistencias_profesor.php
+            // Cargar registros de la base de datos
             async function cargarTablaAsistencias() {
                 try {
                     const response = await fetch('obtener_asistencias_profesor.php');
@@ -329,7 +326,7 @@ $fecha_actual = date('d/m/Y');
                                     <td colspan="5" class="text-center py-5">
                                         <div class="py-3">
                                             <p class="mb-1 text-light">Esperando que los alumnos escaneen el código QR...</p>
-                                            <small class="text-subtle">Los registros aparecerán automáticamente en esta lista.</small>
+                                            <small class="text-subtle">Los registros aparecerán automáticamente en esta lista y en el Panel Admin.</small>
                                         </div>
                                     </td>
                                 </tr>`;
@@ -340,8 +337,6 @@ $fecha_actual = date('d/m/Y');
                                 let selTarde = item.estado === 'Tarde' ? 'selected' : '';
                                 let observacion = item.observacion || '';
 
-                                // Nota: Asumimos que item.grado y item.seccion vendrán separados desde tu archivo JSON backend. 
-                                // Si antes venían unidos como 'grado_seccion', recuerda actualizar tu script JSON para separarlos.
                                 let gradoTexto = item.grado || 'N/D';
                                 let seccionTexto = item.seccion || (item.grado_seccion || 'N/D');
 
@@ -362,9 +357,9 @@ $fecha_actual = date('d/m/Y');
                                                         <option value="A tiempo" ${selATiempo}>🟢 A tiempo</option>
                                                         <option value="Tarde" ${selTarde}>🟡 Tarde</option>
                                                     </select>
-                                                    <button class="btn btn-purple btn-sm px-3" onclick="guardarEstado(${item.id_asistencia})">Guardar</button>
+                                                    <button class="btn btn-purple btn-sm px-3" onclick="guardarEstado(${item.id_asistencia})">Guardar & Enviar</button>
                                                 </div>
-                                                <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" id="obs_${item.id_asistencia}" placeholder="Motivo o nota (opcional)..." value="${observacion}">
+                                                <input type="text" class="form-control form-control-sm bg-dark text-light border-secondary" id="obs_${item.id_asistencia}" placeholder="Motivo u observación..." value="${observacion}">
                                             </div>
                                         </td>
                                     </tr>`;
@@ -379,12 +374,11 @@ $fecha_actual = date('d/m/Y');
                 }
             }
 
-            // Ejecutar inmediatamente al cargar y luego cada 3 segundos
             cargarTablaAsistencias();
             setInterval(cargarTablaAsistencias, 3000);
         });
 
-        // Función global para guardar el estado y la observación de cada alumno individualmente
+        // Guardar estado y notificar cambio a la base de datos global (Panel Admin)
         async function guardarEstado(idAsistencia) {
             const estado = document.getElementById(`estado_${idAsistencia}`).value;
             const observacion = document.getElementById(`obs_${idAsistencia}`).value;
@@ -400,7 +394,7 @@ $fecha_actual = date('d/m/Y');
 
                 const resultado = await response.json();
                 if (resultado.success) {
-                    alert('¡Estado y observación guardados correctamente!');
+                    alert('¡Asistencia actualizada! Se reflejará de inmediato en el Panel del Administrador.');
                 } else {
                     alert('Error al guardar: ' + (resultado.error || 'Desconocido'));
                 }
