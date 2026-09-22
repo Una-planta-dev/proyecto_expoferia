@@ -23,19 +23,46 @@ try {
     $nombre_profesor =$_SESSION['nombre'] ?? 'Docente';
 }
 
-// -------------------------------------------------------------------
-// CÁLCULO DE CÓDIGO DINÁMICO CADA 5 MINUTOS (300 SEGUNDOS)
-// -------------------------------------------------------------------
+// Permitir generar un bloque forzado vía AJAX o parámetro dinámico si se solicita
 $tiempo_actual = time();
-$bloque_5min = floor($tiempo_actual / 300); 
+if (isset($_GET['ajax_nuevo_codigo']) &&$_GET['ajax_nuevo_codigo'] == '1') {
+    // Almacenamos un "salto" de tiempo único en la sesión para este profesor para alterar el bloque de 5 min
+    $_SESSION['offset_forzado_' . $id_profesor] =$tiempo_actual;
+}
 
-$semilla = $id_profesor . '_' .$bloque_5min;
+$offset =$_SESSION['offset_forzado_' . $id_profesor] ?? $tiempo_actual;
+// Si ya pasaron más de 5 minutos desde el forzado, limpiamos
+if (($tiempo_actual -$offset) > 300 && isset($_SESSION['offset_forzado_' .$id_profesor])) {
+    unset($_SESSION['offset_forzado_' .$id_profesor]);
+    $offset =$tiempo_actual;
+}
+
+$bloque_5min = floor($offset / 300);$semilla = $id_profesor . '_' .$bloque_5min . '_' . ($_SESSION['salt_extra_' .$id_profesor] ?? 0);
 $codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
 
 $codigo_manual = "SYN-" . date('Ymd') . "-" . $codigo_hash;
 $datos_qr = "ASISTENCIA_" . $id_profesor . "_" . $bloque_5min . "_" . $codigo_hash;
 
 $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
+
+// Si es una petición AJAX pura para obtener el nuevo código en JSON:
+if (isset($_GET['get_code_json']) &&$_GET['get_code_json'] == '1') {
+    // Incrementamos un salt interno para garantizar variación inmediata al presionar el botón
+    $_SESSION['salt_extra_' .$id_profesor] = ($_SESSION['salt_extra_' .$id_profesor] ?? 0) + 1;
+    $_SESSION['offset_forzado_' .$id_profesor] = time();
+    
+    $nuevo_bloque = floor(time() / 300);$nueva_semilla = $id_profesor . '_' .$nuevo_bloque . '_' . $_SESSION['salt_extra_' .$id_profesor];
+    $nuevo_hash = strtoupper(substr(md5($nueva_semilla), 0, 6));
+    
+    header('Content-Type: application/json');
+    echo json_encode([
+        'success' => true,
+        'codigo_manual' => "SYN-" . date('Ymd') . "-" . $nuevo_hash,
+        'datos_qr' => "ASISTENCIA_" . $id_profesor . "_" . $nuevo_bloque . "_" . $nuevo_hash,
+        'hora' => date('h:i A')
+    ]);
+    exit();
+}
 ?>
 
 <!DOCTYPE html>
@@ -206,21 +233,22 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
 
                     <div class="mb-3 py-2">
                         <div class="qr-container">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=<?= urlencode($datos_qr) ?>" alt="Código QR Asistencia" class="img-fluid" style="border-radius: 8px;">
+                            <img id="qr-imagen" src="https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=<?= urlencode($datos_qr) ?>" alt="Código QR Asistencia" class="img-fluid" style="border-radius: 8px;">
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <small class="text-subtle">Generado a las: </small>
-                        <span class="time-badge"><?= $hora_12h ?></span>
+                        <span id="hora-generado" class="time-badge"><?= $hora_12h ?></span>
                     </div>
 
                     <div class="codigo-alternativo mb-3">
                         <small class="text-subtle d-block mb-1">Código Alternativo Manual:</small>
-                        <h3 class="mb-0 fw-bold text-light" style="letter-spacing: 2px;"><?= $codigo_manual ?></h3>
+                        <h3 id="texto-codigo-manual" class="mb-0 fw-bold text-light" style="letter-spacing: 2px;"><?= $codigo_manual ?></h3>
                     </div>
 
-                    <button class="btn btn-purple w-100 py-2 mt-2" onclick="location.reload();">Generar / Actualizar Código Ahora</button>
+                    <!-- Botón que ejecuta la función sin recargar la página -->
+                    <button class="btn btn-purple w-100 py-2 mt-2" onclick="forzarNuevoCodigo()">Generar / Actualizar Código Ahora</button>
                 </div>
             </div>
 
@@ -265,8 +293,11 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Variable global para controlar el tiempo restante (en segundos)
+        let tiempoRestante = 300;
+
         document.addEventListener("DOMContentLoaded", function() {
-            // Reloj en tiempo real
+            // Reloj en tiempo real de la barra superior
             function actualizarReloj12H() {
                 const ahora = new Date();
                 let horas = ahora.getHours();
@@ -283,26 +314,28 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
             setInterval(actualizarReloj12H, 1000);
             actualizarReloj12H();
 
-            // Contador regresivo sincronizado para el cambio cada 5 minutos
-            let tiempoRestante = 300 - (Math.floor(Date.now() / 1000) % 300);
+            // Sincronizar el contador inicial al cargar la página
+            tiempoRestante = 300 - (Math.floor(Date.now() / 1000) % 300);
 
             function actualizarContador() {
+                // Si llega a 0 o menos, reiniciamos el contador de inmediato y pedimos nuevo código
+                if (tiempoRestante <= 0) {
+                    tiempoRestante = 300; 
+                    forzarNuevoCodigo(false);
+                }
+
                 const min = String(Math.floor(tiempoRestante / 60)).padStart(2, '0');
                 const seg = String(tiempoRestante % 60).padStart(2, '0');
                 
                 const contadorEl = document.getElementById('contador-cambio');
                 if (contadorEl) contadorEl.textContent = `${min}:${seg}`;
 
-                if (tiempoRestante <= 0) {
-                    location.reload();
-                } else {
-                    tiempoRestante--;
-                }
+                tiempoRestante--;
             }
             setInterval(actualizarContador, 1000);
             actualizarContador();
 
-            // Cargar registros de la base de datos
+            // Cargar registros de la base de datos periódicamente
             async function cargarTablaAsistencias() {
                 try {
                     const response = await fetch('obtener_asistencias_profesor.php');
@@ -312,7 +345,6 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
                     try {
                         result = JSON.parse(textData);
                     } catch (e) {
-                        console.error("Respuesta no válida JSON:", textData);
                         return;
                     }
 
@@ -366,8 +398,6 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
                             });
                             tbody.innerHTML = html;
                         }
-                    } else {
-                        console.error("Error en servidor:", result.error);
                     }
                 } catch (error) {
                     console.error("Error de red:", error);
@@ -377,6 +407,31 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
             cargarTablaAsistencias();
             setInterval(cargarTablaAsistencias, 3000);
         });
+
+        // Función para pedir un nuevo código al servidor de forma asíncrona y reiniciar el contador a 5:00
+        async function forzarNuevoCodigo(mostrarAlerta = true) {
+            try {
+                // Forzar reinicio del contador a 300 segundos tanto manual como automáticamente
+                tiempoRestante = 300;
+                
+                const response = await fetch('?get_code_json=1');
+                const data = await response.json();
+
+                if (data.success) {
+                    // Actualizar el código manual en pantalla
+                    document.getElementById('texto-codigo-manual').textContent = data.codigo_manual;
+                    
+                    // Actualizar la imagen del QR
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=190x190&data=${encodeURIComponent(data.datos_qr)}`;
+                    document.getElementById('qr-imagen').src = qrUrl;
+
+                    // Actualizar hora de generación
+                    document.getElementById('hora-generado').textContent = data.hora;
+                }
+            } catch (error) {
+                console.error("Error al generar nuevo código:", error);
+            }
+        }
 
         // Guardar estado y notificar cambio a la base de datos global (Panel Admin)
         async function guardarEstado(idAsistencia) {
