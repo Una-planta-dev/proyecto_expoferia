@@ -14,16 +14,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $claveHash = password_hash($nuevaClave, PASSWORD_BCRYPT);
 
         if ($tipo === 'estudiante') {
-            // Actualiza la columna 'contraseina' en estudiante
             $stmt = $conexion->prepare("UPDATE estudiante SET contraseina = :clave WHERE correo_institucional = :correo");
             $stmt->execute([':clave' => $claveHash, ':correo' => $correo]);
         } else if ($tipo === 'profesor') {
-            // Actualiza la columna 'contraseña' en profesor
             $stmt = $conexion->prepare("UPDATE profesor SET contraseña = :clave WHERE correo_institucional = :correo");
             $stmt->execute([':clave' => $claveHash, ':correo' => $correo]);
         }
 
-        // Limpiar la sesión de recuperación
         unset($_SESSION['codigo_recuperacion'], $_SESSION['correo_recuperacion'], $_SESSION['tipo_usuario']);
 
         echo "<script>alert('¡Contraseña actualizada con éxito!'); window.location.href='login.php';</script>";
@@ -44,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="contenedor">
         <h2>Verificación de Código</h2>
-        <p>Ingresa el código de 5 dígitos enviado a tu correo institucional.</p>
+        <p>Escribe el código de 5 dígitos que enviamos a tu correo institucional.</p>
 
         <?php if (!empty($mensajeError)): ?>
             <p style="color: red;"><?php echo $mensajeError; ?></p>
@@ -52,10 +49,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="restablecer.php" method="POST">
             <label for="codigo">Código de 5 dígitos:</label>
-            <input type="text" name="codigo" id="codigo" maxlength="5" placeholder="Ej: 58219" required>
+            <input type="text" name="codigo" id="codigo" maxlength="5" placeholder="Ej: 48192" required>
 
             <label for="nueva_clave">Nueva Contraseña:</label>
-            <input type="password" name="nueva_clave" id="nueva_clave" placeholder="Escribe tu nueva clave" required minlength="6">
+            <input type="password" name="nueva_clave" id="nueva_clave" placeholder="Ingresa la nueva contraseña" required minlength="6">
 
             <button type="submit">Actualizar Contraseña</button>
         </form>
