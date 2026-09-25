@@ -2,22 +2,35 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Recuperar Contraseña - Synca</title>
-    <link rel="stylesheet" href="estilos.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recuperar Contraseña</title>
+    <link rel="stylesheet" href="estilos.css?v=5">
 </head>
-<body>
-    <div class="contenedor">
-        <h2>Recuperar Contraseña</h2>
-        <p>Ingresa tu correo institucional registrado para enviarte un enlace de recuperación.</p>
-        
-        <!-- Apunta directamente a tu procesar_recuperar.php -->
-        <form action="procesar_recuperar.php" method="POST">
-            <label for="correo">Correo Institucional:</label>
-            <input type="email" name="correo" id="correo" placeholder="ejemplo@correo.com" required>
+<body class="login-body">
+
+    <div class="registro-card-animated">
+        <div class="registro-box">
             
-            <button type="submit">Enviar Enlace</button>
-        </form>
-        <a href="login.php">Volver al inicio de sesión</a>
+            <h2>Recuperar Contraseña</h2>
+            <p class="subtitulo">Ingrese su correo institucional para recibir las instrucciones de restablecimiento</p>
+
+            <form action="procesar_recuperacion.php" method="POST" class="form-columna">
+                
+                <div class="input-group">
+                    <label for="correo">Correo institucional</label>
+                    <input type="email" name="correo" id="correo" placeholder="ejemplo@clases.edu.sv" required>
+                </div>
+
+                <button type="submit" class="btn-enviar">Enviar enlace de recuperación</button>
+
+            </form>
+
+            <div class="volver-box">
+                <a href="login.php" class="btn-volver"></a>
+            </div>
+
+        </div>
     </div>
+
 </body>
 </html>
