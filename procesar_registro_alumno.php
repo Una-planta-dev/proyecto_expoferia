@@ -26,16 +26,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         exit;
     }
 
-    $check = $conexion->prepare("SELECT id_estudiante FROM estudiante WHERE correo_institucional = :correo OR nie = :nie");
-    $check->execute([':correo' => $correo, ':nie' => $nie]);
+ // Validar que el correo no esté registrado ni como docente ni como estudiante, o que el NIE ya exista
+$check = $conexion->prepare("
+    SELECT 'profesor' AS rol FROM profesor WHERE correo_institucional = :correo
+    UNION
+    SELECT 'estudiante' AS rol FROM estudiante WHERE correo_institucional = :correo OR nie = :nie
+");
+$check->execute([':correo' => $correo, ':nie' => $nie]);
 
-    if ($check->rowCount() > 0) {
-        echo "<script>
-        alert('El correo o NIE ya están registrados.');
+if ($check->rowCount() > 0) {
+    echo "<script>
+        alert('El correo o el NIE ya se encuentran registrados en el sistema.');
         window.history.back();
-        </script>";
-        exit;
-    }
+    </script>";
+    exit;
+}
 
     $clave_encriptada = password_hash($clave, PASSWORD_BCRYPT);
 
