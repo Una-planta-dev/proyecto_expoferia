@@ -547,3 +547,7 @@ body {
         padding: 30px 20px;
     }
 }
+
+body {
+    zoom: 0.9; /* Reduce la escala visual de toda la página al 90% */
+}

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inicio de Sesión - Synca</title>
-    <link rel="stylesheet" href="estilos.css?v=2.2">
+    <link rel="stylesheet" href="estilos.css?v=2.3">
     <link rel="icon" type="image/png" href="logo-removebg-preview.png">
 </head>
 <body>
