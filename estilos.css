@@ -19,6 +19,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    zoom:0.9;
 }
 /*esta era la parte derecha*/
 .login-container {
@@ -548,6 +549,3 @@ body {
     }
 }
 
-body {
-    zoom: 0.9; /* Reduce la escala visual de toda la página al 90% */
-}
