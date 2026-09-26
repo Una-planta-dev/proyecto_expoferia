@@ -1,0 +1,22 @@
+name: Deploy a InfinityFree
+
+on:
+  push:
+    branches:
+      - main   # Si tu rama principal se llama master, cambia main por master
+
+jobs:
+  web-deploy:
+    name: Sincronizar archivos por FTP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Obtener codigo mas reciente
+        uses: actions/checkout@v4
+
+      - name: Subir a InfinityFree
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: /htdocs/
