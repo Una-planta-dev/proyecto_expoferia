@@ -134,7 +134,7 @@
         </div>
     </main>
 
-    <!-- Pie de página -->
+    <!-- Pie de página  hola-->
     <footer class="text-center py-4 mt-5">
         <div class="container">
             <p class="mb-0">&copy; 2026 Synca. Todos los derechos reservados. Expoferia de Software.</p>
