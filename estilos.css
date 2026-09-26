@@ -19,6 +19,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    zoom: 0.9;
 }
 /*esta era la parte derecha*/
 .login-container {
@@ -546,11 +547,5 @@ body {
         width: 100%;
         padding: 30px 20px;
     }
-}
-
-html {
-    transform: scale(0.9);
-    transform-origin: top center; /* Mantiene la página centrada arriba al escalar */
-    width: 111.11%; /* Compensa el ancho resultante (100 / 0.9) para evitar espacios blancos en los bordes */
 }
 
