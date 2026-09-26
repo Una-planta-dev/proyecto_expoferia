@@ -19,7 +19,6 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    zoom: 0.9;
 }
 /*esta era la parte derecha*/
 .login-container {
