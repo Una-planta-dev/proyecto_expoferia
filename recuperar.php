@@ -14,7 +14,7 @@
             <h2>Recuperar Contraseña</h2>
             <p class="subtitulo">Ingrese su correo institucional para recibir las instrucciones de restablecimiento</p>
 
-            <form action="procesar_recuperacion.php" method="POST" class="form-columna">
+            <form action="procesar_recuperar.php" method="POST" class="form-columna">
                 
                 <div class="input-group">
                     <label for="correo">Correo institucional</label>
