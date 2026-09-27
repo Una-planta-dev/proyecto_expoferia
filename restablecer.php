@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <title>Verificar Código - Synca</title>
+    <link rel="icon" type="image/png" href="logo-removebg-preview.png">
     <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
@@ -47,14 +48,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p style="color: red;"><?php echo $mensajeError; ?></p>
         <?php endif; ?>
 
-        <form action="restablecer.php" method="POST">
+        <form action="restablecer.php" method="POST" class="input-group">
             <label for="codigo">Código de 5 dígitos:</label>
             <input type="text" name="codigo" id="codigo" maxlength="5" placeholder="Ej: 48192" required>
 
             <label for="nueva_clave">Nueva Contraseña:</label>
             <input type="password" name="nueva_clave" id="nueva_clave" placeholder="Ingresa la nueva contraseña" required minlength="6">
 
-            <button type="submit">Actualizar Contraseña</button>
+            <button type="submit" class="btn-enviar">Actualizar Contraseña</button>
         </form>
     </div>
 </body>
