@@ -63,7 +63,7 @@
             const textElement = document.getElementById("typewriter-text");
             let i = 0;
             const speed = 15;
-            const pauseTime = 20000;
+            const pauseTime = 30000;
 
             function typeEffect() {
                 if (textElement && i < text.length) {
