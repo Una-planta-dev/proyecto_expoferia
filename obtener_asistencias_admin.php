@@ -1,9 +1,9 @@
 <?php
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 require_once 'conexion.php';
 
 try {
-    // Consulta limpia usando solo campos existentes
+    // Consulta corregida para traer el estado real de la base de datos
     $sql = "SELECT 
                 a.id_asistencia,
                 a.hora_registro,
@@ -12,11 +12,13 @@ try {
                 COALESCE(a.observacion, '') AS observacion,
                 COALESCE(e.nombre, p.nombre, 'Usuario') AS nombre,
                 COALESCE(e.apellido, p.apellido, '') AS apellido,
-                'General' AS grado,
-                'A' AS seccion
+                COALESCE(s.grado, 'Segundo Año') AS grado,
+                COALESCE(s.seccion, 'Software') AS seccion
             FROM asistencia a
             LEFT JOIN estudiante e ON a.id_estudiante = e.id_estudiante
             LEFT JOIN profesor p ON a.id_profesor = p.id_profesor
+            LEFT JOIN matricula m ON e.id_estudiante = m.id_estudiante 
+            LEFT JOIN seccion s ON m.id_seccion = s.id_seccion 
             ORDER BY a.id_asistencia DESC
             LIMIT 50";
 

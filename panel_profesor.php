@@ -273,9 +273,11 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
                             let html = '';
                             result.data.forEach(item => {
                                 let est = item.estado ? item.estado.trim() : 'Presente';
-                                let selPresente = (est === 'Presente' || est === 'A tiempo') ? 'selected' : '';
+                                
+                                // Mapeo estricto e independiente de cada estado
+                                let selPresente = est === 'Presente' ? 'selected' : '';
                                 let selTarde = est === 'Tarde' ? 'selected' : '';
-                                let selInjustificada = (est === 'Injustificada' || est === 'No Asistió') ? 'selected' : '';
+                                let selInjustificada = est === 'Injustificada' ? 'selected' : '';
                                 let selJustificado = est === 'Justificado' ? 'selected' : '';
                                 let observacion = item.observacion || '';
 

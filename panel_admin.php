@@ -29,26 +29,46 @@ $fecha_filtro = $_REQUEST['fecha'] ?? date('Y-m-d');
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $accion = $_POST['accion'] ?? '';
 
-    // Dar de baja / Eliminar Docente
+    // Dar de baja / Eliminar Docente (Eliminando primero sus asistencias para evitar conflictos de llave foránea)
     if ($accion === 'baja_docente') {
         $id_docente = intval($_POST['id_docente'] ?? 0);
         try {
+            $conexion->beginTransaction();
+            
+            // Eliminar registros de asistencia asociados al profesor primero
+            $stmtAsis = $conexion->prepare("DELETE FROM asistencia WHERE id_profesor = ?");
+            $stmtAsis->execute([$id_docente]);
+
+            // Luego eliminar al profesor
             $stmt = $conexion->prepare("DELETE FROM profesor WHERE id_profesor = ?");
             $stmt->execute([$id_docente]);
-            $mensaje_exito = "Profesor eliminado correctamente.";
+            
+            $conexion->commit();
+            $mensaje_exito = "Profesor y sus registros asociados eliminados correctamente.";
         } catch (PDOException $e) {
+            $conexion->rollBack();
             $mensaje_error = "Error al eliminar el profesor: " . $e->getMessage();
         }
     }
 
-    // Dar de baja / Eliminar Alumno
+    // Dar de baja / Eliminar Alumno (Eliminando primero sus asistencias para evitar conflictos)
     if ($accion === 'baja_alumno') {
         $id_alumno = intval($_POST['id_estudiante'] ?? 0);
         try {
+            $conexion->beginTransaction();
+
+            // Eliminar registros de asistencia asociados al estudiante primero
+            $stmtAsis = $conexion->prepare("DELETE FROM asistencia WHERE id_estudiante = ?");
+            $stmtAsis->execute([$id_alumno]);
+
+            // Luego eliminar al alumno
             $stmt = $conexion->prepare("DELETE FROM estudiante WHERE id_estudiante = ?");
             $stmt->execute([$id_alumno]);
-            $mensaje_exito = "Alumno eliminado correctamente.";
+            
+            $conexion->commit();
+            $mensaje_exito = "Alumno y sus registros asociados eliminados correctamente.";
         } catch (PDOException $e) {
+            $conexion->rollBack();
             $mensaje_error = "Error al eliminar el alumno: " . $e->getMessage();
         }
     }
@@ -114,7 +134,7 @@ try {
     $listaAlumnos = [];
 }
 
-// Consulta Docentes (Flexible para evitar fallos si cambia el nombre de la tabla)
+// Consulta Docentes
 try {
     $stmtProf = $conexion->query("SELECT * FROM profesor ORDER BY nombre ASC");
     $listaProfesores = $stmtProf->fetchAll(PDO::FETCH_ASSOC);
@@ -337,9 +357,12 @@ try {
                                     <input type="hidden" name="tab" value="asistencias">
                                     <input type="hidden" name="fecha" value="<?= htmlspecialchars($fecha_filtro) ?>">
                                     <td>
-                                        <select name="estado" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 130px;">
+                                        <!-- Actualizado a "Justificado" -->
+                                        <select name="estado" class="form-select form-select-sm bg-dark text-light border-secondary" style="width: 155px;">
                                             <option value="A tiempo" <?= strtolower($estadoActual) === 'a tiempo' ? 'selected' : '' ?>>🟢 A tiempo</option>
                                             <option value="Tarde" <?= strtolower($estadoActual) === 'tarde' ? 'selected' : '' ?>>🟡 Tarde</option>
+                                            <option value="Justificado" <?= (strtolower($estadoActual) === 'justificado' || strtolower($estadoActual) === 'justificada') ? 'selected' : '' ?>>🔵 Justificado</option>
+                                            <option value="Injustificada" <?= strtolower($estadoActual) === 'injustificada' ? 'selected' : '' ?>>🔴 Injustificada</option>
                                         </select>
                                     </td>
                                     <td>
@@ -387,7 +410,7 @@ try {
                                 <td class="text-subtle">#<?= htmlspecialchars($idAlumno) ?></td>
                                 <td class="fw-semibold text-light"><?= htmlspecialchars($nombreAlumno) ?></td>
                                 <td class="text-end">
-                                    <form method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este alumno?');" style="display:inline;">
+                                    <form method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este alumno y sus registros de asistencia?');" style="display:inline;">
                                         <input type="hidden" name="accion" value="baja_alumno">
                                         <input type="hidden" name="id_estudiante" value="<?= htmlspecialchars($idAlumno) ?>">
                                         <input type="hidden" name="tab" value="alumnos">
@@ -433,9 +456,9 @@ try {
                             <tr>
                                 <td class="text-subtle">#<?= htmlspecialchars($idDocente) ?></td>
                                 <td class="fw-semibold text-light"><?= htmlspecialchars($nombreDocente) ?></td>
-                                <td><span class="badge bg-dark border border-secondary text-light"><?= htmlspecialchars($userDocente) ?></span></td>
+                                <td class="text-badge"><span class="badge bg-dark border border-secondary text-light"><?= htmlspecialchars($userDocente) ?></span></td>
                                 <td class="text-end">
-                                    <form method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este docente?');" style="display:inline;">
+                                    <form method="POST" onsubmit="return confirm('¿Estás seguro de eliminar este docente y sus registros asociados?');" style="display:inline;">
                                         <input type="hidden" name="accion" value="baja_docente">
                                         <input type="hidden" name="id_docente" value="<?= htmlspecialchars($idDocente) ?>">
                                         <input type="hidden" name="tab" value="profesores">
