@@ -19,7 +19,7 @@ try {
                 DATE_FORMAT(a.hora_registro, '%h:%i:%s %p') AS hora_registro, 
                 COALESCE(CONCAT('Prof. ', p.nombre, ' ', p.apellido), 'Docente de Turno') AS asignatura, 
                 a.estado, 
-                a.observacion 
+                a.observacion AS comentario 
             FROM asistencia a 
             LEFT JOIN profesor p ON a.id_profesor = p.id_profesor 
             WHERE a.id_estudiante = :id_estudiante 

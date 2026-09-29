@@ -382,7 +382,7 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
         }
 
-       
+        
 
         #reader video {
 
@@ -500,7 +500,7 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
     <main class="main-wrapper">
 
-       
+        
 
         <section class="synca-card">
 
@@ -526,7 +526,7 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
                     <p>Enfoca el código QR generado por tu docente para registrar tu asistencia automáticamente:</p>
 
-                   
+                    
 
                     <div id="reader"></div>
 
@@ -548,7 +548,7 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
                     <p>Si no puedes escanear el QR, digita aquí el PIN o código de la clase:</p>
 
-                   
+                    
 
                     <form action="procesar_asistencia.php" method="POST">
 
@@ -838,6 +838,20 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
 
 
+                                // Cuadrito estilizado para el comentario del docente
+
+                                let comentarioTexto = item.comentario ? `
+
+                                    <div style="margin-top: 8px; background-color: #242438; border: 1px solid #2e2a45; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem; color: #d1d5db;">
+
+                                        <span style="color: #a855f7; font-weight: 600; display: block; margin-bottom: 2px;">💬 Comentario del docente:</span>
+
+                                        <span style="font-style: italic;">${item.comentario}</span>
+
+                                    </div>` : '';
+
+
+
                                 html += `
 
                                     <tr>
@@ -848,7 +862,13 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
                                         <td>${item.asignatura}</td>
 
-                                        <td><span style="${estiloBadge} padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block;">${icono} ${item.estado}</span></td>
+                                        <td>
+
+                                            <span style="${estiloBadge} padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; display: inline-block;">${icono} ${item.estado}</span>
+
+                                            ${comentarioTexto}
+
+                                        </td>
 
                                     </tr>`;
 
@@ -880,4 +900,4 @@ $nombre_usuario = $_SESSION['nombre'] ?? 'Estudiante';
 
 </body>
 
-</html> 
+</html>
