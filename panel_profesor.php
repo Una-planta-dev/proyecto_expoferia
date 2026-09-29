@@ -20,16 +20,15 @@ if (isset($_GET['obtener_asistencias']) &&$_GET['obtener_asistencias'] == '1') {
     while (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: application/json; charset=utf-8');
     try {
-        // Consulta adaptada a tu base de datos (con valores por defecto si falta la matrícula)
         $sql = "SELECT 
-                    a.id_asistencia,
+                    a.id_asistencia, 
                     e.nombre, 
                     e.apellido, 
                     COALESCE(s.grado, 'Segundo Año') AS grado, 
                     COALESCE(s.seccion, 'Software') AS seccion, 
                     DATE_FORMAT(a.hora_registro, '%h:%i:%s %p') AS hora_registro, 
-                    a.estado,
-                    a.observacion
+                    a.estado, 
+                    a.observacion 
                 FROM asistencia a 
                 INNER JOIN estudiante e ON a.id_estudiante = e.id_estudiante 
                 LEFT JOIN matricula m ON e.id_estudiante = m.id_estudiante 
@@ -38,14 +37,14 @@ if (isset($_GET['obtener_asistencias']) &&$_GET['obtener_asistencias'] == '1') {
                 ORDER BY a.hora_registro DESC";
                 
         $stmt =$conexion->prepare($sql);$stmt->execute();
-        
+       
         echo json_encode([
-            'success' => true, 
+            'success' => true,
             'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)
         ]);
     } catch (PDOException $e) {
         echo json_encode([
-            'success' => false, 
+            'success' => false,
             'error' => $e->getMessage()
         ]);
     }
@@ -56,10 +55,10 @@ if (isset($_GET['obtener_asistencias']) &&$_GET['obtener_asistencias'] == '1') {
 if (isset($_GET['get_code_json']) &&$_GET['get_code_json'] == '1') {
     $_SESSION['salt_extra_' .$id_profesor] = ($_SESSION['salt_extra_' .$id_profesor] ?? 0) + 1;
     $_SESSION['offset_forzado_' .$id_profesor] = time();
-    
+   
     $nuevo_bloque = floor(time() / 300);$nueva_semilla = $id_profesor . '_' .$nuevo_bloque . '_' . $_SESSION['salt_extra_' .$id_profesor];
     $nuevo_hash = strtoupper(substr(md5($nueva_semilla), 0, 6));
-    
+   
     while (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
@@ -87,7 +86,7 @@ if (($tiempo_actual -$offset) > 300 && isset($_SESSION['offset_forzado_' .$id_pr
 }
 
 $bloque_5min = floor($offset / 300);$semilla = $id_profesor . '_' .$bloque_5min . '_' . ($_SESSION['salt_extra_' .$id_profesor] ?? 0);
-$codigo_hash = strtoupper(substr(md5($semilla), 0, 6)); 
+$codigo_hash = strtoupper(substr(md5($semilla), 0, 6));
 
 $codigo_manual = "SYN-" . date('Ymd') . "-" . $codigo_hash;
 $datos_qr = "ASISTENCIA_" . $id_profesor . "_" . $bloque_5min . "_" . $codigo_hash;
@@ -233,7 +232,7 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
 
             function actualizarContador() {
                 if (tiempoRestante <= 0) {
-                    tiempoRestante = 300; 
+                    tiempoRestante = 300;
                     forzarNuevoCodigo();
                 }
                 const min = String(Math.floor(tiempoRestante / 60)).padStart(2, '0');
@@ -246,6 +245,12 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
             actualizarContador();
 
             async function cargarTablaAsistencias() {
+                // EVITAR SOBREESCRIBIR SI EL PROFESOR ESTÁ EDITANDO UN SELECT O UN INPUT
+                const activo = document.activeElement;
+                if (activo && (activo.tagName === 'SELECT' || activo.tagName === 'INPUT') && activo.id && (activo.id.startsWith('estado_') || activo.id.startsWith('obs_'))) {
+                    return; 
+                }
+
                 try {
                     const response = await fetch('?obtener_asistencias=1');
                     const result = await response.json();
@@ -270,6 +275,8 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
                                 let est = item.estado ? item.estado.trim() : 'Presente';
                                 let selPresente = (est === 'Presente' || est === 'A tiempo') ? 'selected' : '';
                                 let selTarde = est === 'Tarde' ? 'selected' : '';
+                                let selInjustificada = (est === 'Injustificada' || est === 'No Asistió') ? 'selected' : '';
+                                let selJustificado = est === 'Justificado' ? 'selected' : '';
                                 let observacion = item.observacion || '';
 
                                 html += `
@@ -284,6 +291,8 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
                                                     <select class="form-select form-select-sm bg-dark text-light border-secondary" id="estado_${item.id_asistencia}">
                                                         <option value="Presente" ${selPresente}>🟢 Presente</option>
                                                         <option value="Tarde" ${selTarde}>🟡 Tarde</option>
+                                                        <option value="Injustificada" ${selInjustificada}>🔴 Injustificada</option>
+                                                        <option value="Justificado" ${selJustificado}>🔵 Justificado</option>
                                                     </select>
                                                     <button class="btn btn-purple btn-sm px-3" onclick="guardarEstado(${item.id_asistencia})">Guardar</button>
                                                 </div>
@@ -322,7 +331,7 @@ $hora_12h = date('h:i A');$fecha_actual = date('d/m/Y');
 
         async function guardarEstado(idAsistencia) {
             const estado = document.getElementById(`estado_${idAsistencia}`).value;
-            const observacion = document.getElementById(`obs_${idAsistencia}` ).value;
+            const observacion = document.getElementById(`obs_${idAsistencia}`).value;
 
             try {
                 const response = await fetch('actualizar_estado_asistencia.php', {
