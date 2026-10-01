@@ -40,6 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
+      <div class="registro-card-animated">
+        <div class="registro-box">
+
     <div class="contenedor">
         <h2>Verificación de Código</h2>
         <p>Escribe el código de 5 dígitos que enviamos a tu correo institucional.</p>
@@ -57,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <button type="submit" class="btn-enviar">Actualizar Contraseña</button>
         </form>
+    </div>
+    </div>
     </div>
 </body>
 </html>
